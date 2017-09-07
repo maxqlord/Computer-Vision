@@ -1,0 +1,3 @@
+/Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles/Triangle.dir

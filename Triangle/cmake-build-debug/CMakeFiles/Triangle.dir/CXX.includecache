@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/maxlord/CLionProjects/Triangle/main.cpp
+iostream
+-
+fstream
+-
+cstdlib
+-
+vector
+-
+stdlib.h
+-
+cmath
+-
+
