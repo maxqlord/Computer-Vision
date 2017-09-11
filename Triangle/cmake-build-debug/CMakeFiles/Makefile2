@@ -54,10 +54,10 @@ RM = /Applications/CLion.app/Contents/bin/cmake/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/maxlord/CLionProjects/Triangle
+CMAKE_SOURCE_DIR = "/Users/maxlord/Google Drive/Computer Vision/Triangle"
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/maxlord/CLionProjects/Triangle/cmake-build-debug
+CMAKE_BINARY_DIR = "/Users/maxlord/Google Drive/Computer Vision/Triangle/cmake-build-debug"
 
 #=============================================================================
 # Target rules for target CMakeFiles/Triangle.dir
@@ -66,7 +66,7 @@ CMAKE_BINARY_DIR = /Users/maxlord/CLionProjects/Triangle/cmake-build-debug
 CMakeFiles/Triangle.dir/all:
 	$(MAKE) -f CMakeFiles/Triangle.dir/build.make CMakeFiles/Triangle.dir/depend
 	$(MAKE) -f CMakeFiles/Triangle.dir/build.make CMakeFiles/Triangle.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target Triangle"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/maxlord/Google Drive/Computer Vision/Triangle/cmake-build-debug/CMakeFiles" --progress-num=1,2 "Built target Triangle"
 .PHONY : CMakeFiles/Triangle.dir/all
 
 # Include target in all.
@@ -76,9 +76,9 @@ all: CMakeFiles/Triangle.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/Triangle.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/maxlord/Google Drive/Computer Vision/Triangle/cmake-build-debug/CMakeFiles" 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Triangle.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/maxlord/Google Drive/Computer Vision/Triangle/cmake-build-debug/CMakeFiles" 0
 .PHONY : CMakeFiles/Triangle.dir/rule
 
 # Convenience name for target.

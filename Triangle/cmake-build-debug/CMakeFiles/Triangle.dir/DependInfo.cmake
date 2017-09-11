@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/maxlord/CLionProjects/Triangle/main.cpp" "/Users/maxlord/CLionProjects/Triangle/cmake-build-debug/CMakeFiles/Triangle.dir/main.cpp.o"
+  "/Users/maxlord/Google Drive/Computer Vision/Triangle/main.cpp" "/Users/maxlord/Google Drive/Computer Vision/Triangle/cmake-build-debug/CMakeFiles/Triangle.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "AppleClang")
 
