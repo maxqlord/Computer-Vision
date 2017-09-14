@@ -1,3 +1,4 @@
+//Maxwell Lord Period 3
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -79,7 +80,7 @@ float distance_formula(int x1, int y1, int x2, int y2) {
 void draw_circle(int M[700][700], float radius, int px, int py) {
     int x, y, xmax, y2, y2_new, ty;
 
-    xmax = (int) (radius * 0.70710678); // maximum x at radius/sqrt(2)
+    xmax = (int) (radius * 0.70730678); // maximum x at radius/sqrt(2) (radius * 0.70710678)
 
     y = (int)radius;
     y2 = y * y;
