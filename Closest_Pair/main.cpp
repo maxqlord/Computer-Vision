@@ -175,6 +175,66 @@ float closest(vector<point> p, int n)
     return d;
 }
 
+int random_index(int size) {
+    random_device rd;   // non-deterministic generator
+    mt19937 gen(rd());  // to seed mersenne twister.
+    uniform_int_distribution<> dist(0, size);
+    return (dist(gen));
+}
+bool hasPointInNeighborhood(vector<point> set, int index, int b) {
+    //return true if point in set has a point in its neighborhood
+}
+
+float sieve_algorithm(vector<point> p, int n){
+    vector<point> set = p;
+    int counter = 0;
+    float dist_final;
+    float b;
+
+    while(!set.empty()) {
+        int index = random_index((int)set.size());
+        //point xi = set.at((unsigned long)index);
+        point xi = set[index];
+        float dxi = std::numeric_limits<float>::max();; //closest point to xi
+        for(int i = 0; i < set.size(); i++) {
+            if(i != index) {
+                float dist = distance_formula(xi.x, xi.y, set[i].x, set[i].y); //distance from xi to set[i]
+                if(dist < dxi) {
+                    dxi = dist;
+                }
+            }
+        }
+        //dxi is now distance from xi to closest point in set
+
+        b = dxi/3.0f; //length of cell in mesh
+        dist_final = dxi;
+
+        //implement using hashing- remove points with no points in neighborhood
+        for(int j = 0; j < (int)set.size(); j++) {
+            if(!hasPointInNeighborhood(set, j, b)) {
+                set.erase(std::remove(set.begin(), set.end(), set[j]), set.end());
+            }
+        }
+
+        counter +=1;
+    }
+
+    //b = dist_final/3.0f;
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
 int main() {
     srand(time(NULL));
 
@@ -214,7 +274,7 @@ int main() {
     }
 */
         int n = (int) p.size();
-        float min = closest(p, n);
+        float min = sieve_algorithm(p, n);
         duration = (std::clock() - start) / (double) CLOCKS_PER_SEC;
         printf("The smallest distance is %f\n", min);
         printf("The closest coordinates were %d\t%d\t%d\t%d\n", bestx1, besty1, bestx2, besty2);
