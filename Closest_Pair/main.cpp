@@ -186,6 +186,16 @@ bool hasPointInNeighborhood(vector<point> set, int index, int b) {
 }
 
 float sieve_algorithm(vector<point> p, int n){
+
+
+
+    //build mesh anchored at top right
+    //build dictionary with key being (r,c) and value being a list of all points in that cell
+    //7x7 maps to a 0-48 array- 7*r + c
+    //then make hashing structure- unordered map in C++
+    //coalesce hashing
+
+
     vector<point> set = p;
     int counter = 0;
     float dist_final;
@@ -195,7 +205,7 @@ float sieve_algorithm(vector<point> p, int n){
         int index = random_index((int)set.size());
         //point xi = set.at((unsigned long)index);
         point xi = set[index];
-        float dxi = std::numeric_limits<float>::max();; //closest point to xi
+        float dxi = std::numeric_limits<float>::max(); //closest point to xi
         for(int i = 0; i < set.size(); i++) {
             if(i != index) {
                 float dist = distance_formula(xi.x, xi.y, set[i].x, set[i].y); //distance from xi to set[i]
@@ -218,8 +228,18 @@ float sieve_algorithm(vector<point> p, int n){
 
         counter +=1;
     }
+    //counter is i*
+    //dist_final is dxi*
 
-    //b = dist_final/3.0f;
+    b = dist_final;
+    float closest_dist = std::numeric_limits<float>::max();
+    float closest_neighborhood;
+    for(int i = 0; i < set.size(); i++) {
+        //closest_neighborhood = closest point to set[i] in set[i]'s neighborhood
+        if(closest_neighborhood < closest_dist) { //closest pair
+            closest_dist = closest_neighborhood;
+        }
+    }
 
 
 
