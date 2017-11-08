@@ -95,6 +95,8 @@ float brute_force_one_point(vector<point> p, int n) //may need to return points
     return min;
 }
 
+//n log n
+
 float closest(vector<point> p, int n)
 {
     // If there are 2 or 3 points, then use brute force
@@ -289,7 +291,9 @@ bool pointInMap(int index, unordered_map<int,vector<point> > map) {
 bool hasPointInNeighborhood(int row, int col, unordered_map<int,vector<point> > map, int size) {
 
     //index
+
     int index = row*size+col;
+
     if(map[index].size() > 1) {
         return true;
     }
@@ -326,7 +330,6 @@ bool hasPointInNeighborhood(int row, int col, unordered_map<int,vector<point> > 
         return true;
     }
     return false;
-
 
     //return makeNeighborhood(row, col, std::move(map), size).size() > 1;
 }
@@ -399,8 +402,8 @@ float sieve_algorithm(vector<point> p, int square_length){
 
         int end = (int) set.size();
         for (int i = 0; i < end; i++) {
-            int row = (int) (((float) set[i].x )/ b);
-            int col = (int) (((float) set[i].y )/ b);
+            int row = (int) (set[i].x / b);
+            int col = (int) (set[i].y / b);
             int map_index = row * size + col;
             map[map_index].push_back(set[i]);
             vector<point> a = map[map_index];
@@ -418,20 +421,33 @@ float sieve_algorithm(vector<point> p, int square_length){
 
 
         //implement using hashing- remove points with no points in neighborhood
-        for(int j = (int)set.size()-1; j > -1; j--) {
-            //int row = (int)(((float)set[j].x)/b);
-           // int col = (int)(((float)set[j].y)/b);
-            int row = 1;
-            int col = 1;
+        /*
+        int counter2 = (int)set.size() -1;
+        for ( const auto &myPair :map ) {
 
-
-            printf("%d\n", j);
-            //bool test = hasPointInNeighborhood(row, col, map, size);
-            if(!hasPointInNeighborhood(row, col, map, size)) {
-                set.erase(set.begin() + j);
-                //int map_index = row*size + col;
-                //map.erase(map_index);
+            myPair.first; //index
+            myPair.second; //vector
+            if(myPair.second.size() == 1) {
+                set.erase(set.begin() + counter2);
             }
+            counter2 -= 1;
+        }*/
+        unordered_map<int,bool > map_check;
+        for(int j = (int)set.size() - 1; j > -1; j--) {
+            int row = (int) (set[j].x / b);
+            int col = (int) (set[j].y / b);
+            int map_index = row*size + col;
+            //printf("%d\n", j);
+            //bool test = hasPointInNeighborhood(row, col, map, size);
+            if(map_check[map_index] == false) {
+                if (!hasPointInNeighborhood(row, col, map, size)) {
+                    set.erase(set.begin() + j);
+
+                    map.erase(map_index);
+                }
+                map_check[index] = true;
+            }
+
         }
 
     counter +=1; //maybe not last round
@@ -448,8 +464,8 @@ float sieve_algorithm(vector<point> p, int square_length){
     unordered_map<int,vector<point> > map_final;
     int end = (int) p.size();
     for (int i = 0; i < end; i++) {
-        int row = (int) (((float) p[i].x) / b);
-        int col = (int) (((float) p[i].y )/ b);
+        int row = (int)( p[i].x / b);
+        int col = (int) ( p[i].y / b);
         int map_index = row * size + col;
         //printf("index %d\t map_index %d\t pointx %d\t pointy %d\t row %d\t, col %d\n", i, map_index, p[i].x, p[i].y, row, col);
         map_final[map_index].push_back(p[i]);
@@ -488,7 +504,7 @@ int main() {
 
 
         int num_of_points = x;
-        int range_of_nums = x;
+        int range_of_nums = 10*x;
         random_device rd;   // non-deterministic generator
         mt19937 gen(rd());  // to seed mersenne twister.
         uniform_int_distribution<> dist(0, range_of_nums);
@@ -516,7 +532,7 @@ int main() {
 */
 
         int n = (int) p.size();
-        printf("%s\n", "algorithm started");
+        //printf("%s\n", "algorithm started");
         float min = sieve_algorithm(p, range_of_nums);
         duration = (std::clock() - start) / (double) CLOCKS_PER_SEC;
         printf("The smallest distance is %f\n", min);
@@ -534,19 +550,6 @@ int main() {
         p.clear();
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
