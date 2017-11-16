@@ -1,0 +1,3 @@
+/Users/maxlord/Google Drive/Computer Vision/Coins/CMakeFiles/rebuild_cache.dir
+/Users/maxlord/Google Drive/Computer Vision/Coins/CMakeFiles/edit_cache.dir
+/Users/maxlord/Google Drive/Computer Vision/Coins/CMakeFiles/Coins.dir
