@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <opencv2/opencv.hpp>
@@ -53,57 +53,62 @@ void sobel(Mat src, Mat1s& dst, int direction)
 Mat edgeDetect(Mat src, int upperThreshold, int lowerThreshold, double size = 3) //thresholds are for derivative calcs
 {
 
-    //calculate sobel
+    //sobel(src, magX, 0);
+    //sobel(src, magY, 1);
+
+    //sobel holder
     Mat magX = Mat(src.rows, src.cols, CV_32F);
     Mat magY = Mat(src.rows, src.cols, CV_32F);
 
-    //sobel(src, magX, 0);
-    //sobel(src, magY, 1);
-    cv::Sobel(src, magX, CV_32F, 1, 0, size);
-    cv::Sobel(src, magY, CV_32F, 0, 1, size);
+    //calculate sobel into magx and magy
+    cv::Sobel(src, magX, CV_32F, 1, 0, (int)size);
+    cv::Sobel(src, magY, CV_32F, 0, 1, (int)size);
 
-    //calculate slope at all points
+    //calculate slope at all points- divide y derivative by x derivative
     Mat direction = Mat(src.rows, src.cols, CV_32F);
     cv::divide(magY, magX, direction);
 
-    //magnitude of gradient at each pixel
+    //magnitude of gradient at each pixel: sqrt((Gx)^2 + (Gy)^2)
+    //create destination mats
     Mat sum = Mat(src.rows, src.cols, CV_64F);
     Mat prodX = Mat(src.rows, src.cols, CV_64F);
     Mat prodY = Mat(src.rows, src.cols, CV_64F);
-    cv::multiply(magX, magX, prodX);
-    cv::multiply(magY, magY, prodY);
-    sum = prodX + prodY;
-    cv::sqrt(sum, sum);
+    cv::multiply(magX, magX, prodX); //x derivative squared into prodx
+    cv::multiply(magY, magY, prodY); //y derivative squared into prody
+    sum = prodX + prodY; //x^2 + x^2
+    cv::sqrt(sum, sum); //sqrt all elements in sum
 
 
-    Mat returnImg = Mat(src.rows, src.cols, CV_8U);
+    Mat returnImg = Mat(src.rows, src.cols, CV_8U); //instantiate image to output
 
-    returnImg.setTo(cv::Scalar(0));         // Initialize image to return to zero
+    returnImg.setTo(cv::Scalar(0)); // Initialize image as a one channel image (filled with 0s)
 
-    // Initialize iterators
+    // Initialize iterators- magnitude, direction, and return iterators
     cv::MatIterator_<float> itMag = sum.begin<float>();
-    cv::MatIterator_<float> itDirection = direction.begin<float>();
+    cv::MatIterator_<double> itDirection = direction.begin<double>();
 
     cv::MatIterator_<unsigned char> itRet = returnImg.begin<unsigned char>();
 
     cv::MatIterator_<float> itend = sum.end<float>();
 
-    for (; itMag != itend; ++itDirection, ++itRet, ++itMag) {
-        const cv::Point pos = itRet.pos();
+    for (; itMag != itend; ++itDirection, ++itRet, ++itMag) {   //loop through each pixel
+        const cv::Point pos = itRet.pos(); //current pixel
 
-        float currentDirection = atan(*itDirection) * 180 / 3.142;
+        double currentDirection = atan(*itDirection) * 180 / 3.142; //gradient direction in degrees
 
-        while (currentDirection < 0) currentDirection += 180;
+        while (currentDirection < 0) currentDirection += 180; //make angle positive if necessary
 
-        *itDirection = currentDirection;
+        *itDirection = currentDirection; //store gradient angle
 
-        if (*itMag < upperThreshold) continue;
+        if (*itMag < upperThreshold) continue; //if gradient magnitude is not high enough then skip
 
-        bool flag = true;
+        bool flag = true; //edge or not - will be edge if it passes following tests
 
-        if (currentDirection > 112.5 && currentDirection <= 157.5) {
-            if (pos.y > 0 && pos.x < src.cols - 1 && *itMag <= sum.at<float>(pos.y - 1, pos.x + 1)) flag = false;
-            if (pos.y < src.rows - 1 && pos.x > 0 && *itMag <= sum.at<float>(pos.y + 1, pos.x - 1)) flag = false;
+        if (currentDirection > 112.5 && currentDirection <= 157.5) { //edge from top left to bottom right
+            if (pos.y > 0 && pos.x < src.cols - 1 && *itMag <= sum.at<float>(pos.y - 1, pos.x + 1))
+                flag = false; //if magnitude lower than top right (w/ bound check)
+            if (pos.y < src.rows - 1 && pos.x > 0 && *itMag <= sum.at<float>(pos.y + 1, pos.x - 1))
+                flag = false; //if magnitude lower than bottom left (w/ bound check)
         } else if (currentDirection > 67.5 && currentDirection <= 112.5) {
             if (pos.y > 0 && *itMag <= sum.at<float>(pos.y - 1, pos.x)) flag = false;
             if (pos.y < src.rows - 1 && *itMag <= sum.at<float>(pos.y + 1, pos.x)) flag = false;
@@ -116,127 +121,127 @@ Mat edgeDetect(Mat src, int upperThreshold, int lowerThreshold, double size = 3)
             if (pos.x < src.cols - 1 && *itMag <= sum.at<float>(pos.y, pos.x + 1)) flag = false;
         }
 
-        if (flag) {
+        if (flag) { //if still an edge make white
             *itRet = 255;
+            //printf("Edge");
         }
+    }
 
-        // Step 4: Hysterysis threshold
-        bool imageChanged = true;
-        int i = 0;
-        while (imageChanged) {
-            imageChanged = false;
-            printf("Iteration %d", i);
-            i++;
-            itMag = sum.begin<float>();
-            itDirection = direction.begin<float>();
-            itRet = returnImg.begin<unsigned char>();
-            itend = sum.end<float>();
-            for (; itMag != itend; ++itMag, ++itDirection, ++itRet) {
-                cv::Point pos = itRet.pos();
-                if (pos.x < 2 || pos.x >= src.cols - 2 || pos.y < 2 || pos.y >= src.rows - 2)
-                    continue;
-                float currentDirection = *itDirection;
+    // Step 4: Hysterysis threshold
+    bool imageChanged = true; //if image changed- will be set to true if new edge pixels found
+    int i = 0; //counter
+    while (imageChanged) {
+        imageChanged = false;
+        printf("Iteration %d", i);
+        i++;
+        itMag = sum.begin<float>();
+        itDirection = direction.begin<double>();
+        itRet = returnImg.begin<unsigned char>();
+        itend = sum.end<float>();
+        for (; itMag != itend; ++itMag, ++itDirection, ++itRet) {
+            cv::Point pos = itRet.pos();
+            if (pos.x < 2 || pos.x >= src.cols - 2 || pos.y < 2 || pos.y >= src.rows - 2)
+                continue;
+            float currentDirection = *itDirection;
 
-                // Do we have a pixel we already know as an edge?
-                if (*itRet == 255) {
-                    *itRet = (unsigned char) 64;
-                    if (currentDirection > 112.5 && currentDirection <= 157.5) {
-                        if (pos.y > 0 && pos.x > 0) {
-                            if (lowerThreshold <= sum.at<float>(pos.y - 1, pos.x - 1) &&
-                                returnImg.at<unsigned char>(pos.y - 1, pos.x - 1) != 64 &&
-                                direction.at<float>(pos.y - 1, pos.x - 1) > 112.5 &&
-                                direction.at<float>(pos.y - 1, pos.x - 1) <= 157.5 &&
-                                sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y - 2, pos.x) &&
-                                sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y, pos.x - 2)) {
-                                returnImg.ptr<unsigned char>(pos.y - 1, pos.x - 1)[0] = 255;
-                                imageChanged = true;
-                            }
+            // Do we have a pixel we already know as an edge?
+            if (*itRet == 255) {
+                *itRet = (unsigned char) 64;
+                if (currentDirection > 112.5 && currentDirection <= 157.5) {
+                    if (pos.y > 0 && pos.x > 0) {
+                        if (lowerThreshold <= sum.at<float>(pos.y - 1, pos.x - 1) &&
+                            returnImg.at<unsigned char>(pos.y - 1, pos.x - 1) != 64 &&
+                            direction.at<float>(pos.y - 1, pos.x - 1) > 112.5 &&
+                            direction.at<float>(pos.y - 1, pos.x - 1) <= 157.5 &&
+                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y - 2, pos.x) &&
+                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y, pos.x - 2)) {
+                            returnImg.ptr<unsigned char>(pos.y - 1, pos.x - 1)[0] = 255;
+                            imageChanged = true;
                         }
-                        if (pos.y < src.rows - 1 && pos.x < src.cols - 1) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y + 1)) &&
-                                returnImg.at<unsigned char>(pos.y + 1, pos.x + 1) != 64 &&
-                                direction.at<float>(pos.y + 1, pos.x + 1) > 112.5 &&
-                                direction.at<float>(pos.y + 1, pos.x + 1) <= 157.5 &&
-                                sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y + 2, pos.x) &&
-                                sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y, pos.x + 2)) {
-                                returnImg.ptr<unsigned char>(pos.y + 1, pos.x + 1)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                    if (pos.y < src.rows - 1 && pos.x < src.cols - 1) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y + 1)) &&
+                            returnImg.at<unsigned char>(pos.y + 1, pos.x + 1) != 64 &&
+                            direction.at<float>(pos.y + 1, pos.x + 1) > 112.5 &&
+                            direction.at<float>(pos.y + 1, pos.x + 1) <= 157.5 &&
+                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y + 2, pos.x) &&
+                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y, pos.x + 2)) {
+                            returnImg.ptr<unsigned char>(pos.y + 1, pos.x + 1)[0] = 255;
+                            imageChanged = true;
                         }
-                    } else if (currentDirection > 67.5 && currentDirection <= 112.5) {
-                        if (pos.x > 0) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x - 1, pos.y)) &&
-                                returnImg.at<unsigned char>(pos.y, pos.x - 1) != 64 &&
-                                direction.at<float>(pos.y, pos.x - 1) > 67.5 &&
-                                direction.at<float>(pos.y, pos.x - 1) <= 112.5 &&
-                                sum.at<float>(pos.y, pos.x - 1) > sum.at<float>(pos.y - 1, pos.x - 1) &&
-                                sum.at<float>(pos.y, pos.x - 1) > sum.at<float>(pos.y + 1, pos.x - 1)) {
-                                returnImg.ptr<unsigned char>(pos.y, pos.x - 1)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                } else if (currentDirection > 67.5 && currentDirection <= 112.5) {
+                    if (pos.x > 0) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x - 1, pos.y)) &&
+                            returnImg.at<unsigned char>(pos.y, pos.x - 1) != 64 &&
+                            direction.at<float>(pos.y, pos.x - 1) > 67.5 &&
+                            direction.at<float>(pos.y, pos.x - 1) <= 112.5 &&
+                            sum.at<float>(pos.y, pos.x - 1) > sum.at<float>(pos.y - 1, pos.x - 1) &&
+                            sum.at<float>(pos.y, pos.x - 1) > sum.at<float>(pos.y + 1, pos.x - 1)) {
+                            returnImg.ptr<unsigned char>(pos.y, pos.x - 1)[0] = 255;
+                            imageChanged = true;
                         }
-                        if (pos.x < src.cols - 1) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y)) &&
-                                returnImg.at<unsigned char>(pos.y, pos.x + 1) != 64 &&
-                                direction.at<float>(pos.y, pos.x + 1) > 67.5 &&
-                                direction.at<float>(pos.y, pos.x + 1) <= 112.5 &&
-                                sum.at<float>(pos.y, pos.x + 1) > sum.at<float>(pos.y - 1, pos.x + 1) &&
-                                sum.at<float>(pos.y, pos.x + 1) > sum.at<float>(pos.y + 1, pos.x + 1)) {
-                                returnImg.ptr<unsigned char>(pos.y, pos.x + 1)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                    if (pos.x < src.cols - 1) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y)) &&
+                            returnImg.at<unsigned char>(pos.y, pos.x + 1) != 64 &&
+                            direction.at<float>(pos.y, pos.x + 1) > 67.5 &&
+                            direction.at<float>(pos.y, pos.x + 1) <= 112.5 &&
+                            sum.at<float>(pos.y, pos.x + 1) > sum.at<float>(pos.y - 1, pos.x + 1) &&
+                            sum.at<float>(pos.y, pos.x + 1) > sum.at<float>(pos.y + 1, pos.x + 1)) {
+                            returnImg.ptr<unsigned char>(pos.y, pos.x + 1)[0] = 255;
+                            imageChanged = true;
                         }
-                    } else if (currentDirection > 22.5 && currentDirection <= 67.5) {
-                        if (pos.y > 0 && pos.x < src.cols - 1) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y - 1)) &&
-                                returnImg.at<unsigned char>(pos.y - 1, pos.x + 1) != 64 &&
-                                direction.at<float>(pos.y - 1, pos.x + 1) > 22.5 &&
-                                direction.at<float>(pos.y - 1, pos.x + 1) <= 67.5 &&
-                                sum.at<float>(pos.y - 1, pos.x + 1) > sum.at<float>(pos.y - 2, pos.x) &&
-                                sum.at<float>(pos.y - 1, pos.x + 1) > sum.at<float>(pos.y, pos.x + 2)) {
-                                returnImg.ptr<unsigned char>(pos.y - 1, pos.x + 1)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                } else if (currentDirection > 22.5 && currentDirection <= 67.5) {
+                    if (pos.y > 0 && pos.x < src.cols - 1) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y - 1)) &&
+                            returnImg.at<unsigned char>(pos.y - 1, pos.x + 1) != 64 &&
+                            direction.at<float>(pos.y - 1, pos.x + 1) > 22.5 &&
+                            direction.at<float>(pos.y - 1, pos.x + 1) <= 67.5 &&
+                            sum.at<float>(pos.y - 1, pos.x + 1) > sum.at<float>(pos.y - 2, pos.x) &&
+                            sum.at<float>(pos.y - 1, pos.x + 1) > sum.at<float>(pos.y, pos.x + 2)) {
+                            returnImg.ptr<unsigned char>(pos.y - 1, pos.x + 1)[0] = 255;
+                            imageChanged = true;
                         }
-                        if (pos.y < src.rows - 1 && pos.x > 0) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x - 1, pos.y + 1)) &&
-                                returnImg.at<unsigned char>(pos.y + 1, pos.x - 1) != 64 &&
-                                direction.at<float>(pos.y + 1, pos.x - 1) > 22.5 &&
-                                direction.at<float>(pos.y + 1, pos.x - 1) <= 67.5 &&
-                                sum.at<float>(pos.y + 1, pos.x - 1) > sum.at<float>(pos.y, pos.x - 2) &&
-                                sum.at<float>(pos.y + 1, pos.x - 1) > sum.at<float>(pos.y + 2, pos.x)) {
-                                returnImg.ptr<unsigned char>(pos.y + 1, pos.x - 1)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                    if (pos.y < src.rows - 1 && pos.x > 0) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x - 1, pos.y + 1)) &&
+                            returnImg.at<unsigned char>(pos.y + 1, pos.x - 1) != 64 &&
+                            direction.at<float>(pos.y + 1, pos.x - 1) > 22.5 &&
+                            direction.at<float>(pos.y + 1, pos.x - 1) <= 67.5 &&
+                            sum.at<float>(pos.y + 1, pos.x - 1) > sum.at<float>(pos.y, pos.x - 2) &&
+                            sum.at<float>(pos.y + 1, pos.x - 1) > sum.at<float>(pos.y + 2, pos.x)) {
+                            returnImg.ptr<unsigned char>(pos.y + 1, pos.x - 1)[0] = 255;
+                            imageChanged = true;
                         }
-                    } else {
-                        if (pos.y > 0) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x, pos.y - 1)) &&
-                                returnImg.at<unsigned char>(pos.y - 1, pos.x) != 64 &&
-                                (direction.at<float>(pos.y - 1, pos.x) < 22.5 ||
-                                 direction.at<float>(pos.y - 1, pos.x) >= 157.5) &&
-                                sum.at<float>(pos.y - 1, pos.x) > sum.at<float>(pos.y - 1, pos.x - 1) &&
-                                sum.at<float>(pos.y - 1, pos.x) > sum.at<float>(pos.y - 1, pos.x + 2)) {
-                                returnImg.ptr<unsigned char>(pos.y - 1, pos.x)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                } else {
+                    if (pos.y > 0) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x, pos.y - 1)) &&
+                            returnImg.at<unsigned char>(pos.y - 1, pos.x) != 64 &&
+                            (direction.at<float>(pos.y - 1, pos.x) < 22.5 ||
+                             direction.at<float>(pos.y - 1, pos.x) >= 157.5) &&
+                            sum.at<float>(pos.y - 1, pos.x) > sum.at<float>(pos.y - 1, pos.x - 1) &&
+                            sum.at<float>(pos.y - 1, pos.x) > sum.at<float>(pos.y - 1, pos.x + 2)) {
+                            returnImg.ptr<unsigned char>(pos.y - 1, pos.x)[0] = 255;
+                            imageChanged = true;
                         }
-                        if (pos.y < src.rows - 1) {
-                            if (lowerThreshold <= sum.at<float>(cv::Point(pos.x, pos.y + 1)) &&
-                                returnImg.at<unsigned char>(pos.y + 1, pos.x) != 64 &&
-                                (direction.at<float>(pos.y + 1, pos.x) < 22.5 ||
-                                 direction.at<float>(pos.y + 1, pos.x) >= 157.5) &&
-                                sum.at<float>(pos.y + 1, pos.x) > sum.at<float>(pos.y + 1, pos.x - 1) &&
-                                sum.at<float>(pos.y + 1, pos.x) > sum.at<float>(pos.y + 1, pos.x + 1)) {
-                                returnImg.ptr<unsigned char>(pos.y + 1, pos.x)[0] = 255;
-                                imageChanged = true;
-                            }
+                    }
+                    if (pos.y < src.rows - 1) {
+                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x, pos.y + 1)) &&
+                            returnImg.at<unsigned char>(pos.y + 1, pos.x) != 64 &&
+                            (direction.at<float>(pos.y + 1, pos.x) < 22.5 ||
+                             direction.at<float>(pos.y + 1, pos.x) >= 157.5) &&
+                            sum.at<float>(pos.y + 1, pos.x) > sum.at<float>(pos.y + 1, pos.x - 1) &&
+                            sum.at<float>(pos.y + 1, pos.x) > sum.at<float>(pos.y + 1, pos.x + 1)) {
+                            returnImg.ptr<unsigned char>(pos.y + 1, pos.x)[0] = 255;
+                            imageChanged = true;
                         }
                     }
                 }
             }
         }
-
     }
     cv::MatIterator_<unsigned char> current = returnImg.begin<unsigned char>();
     cv::MatIterator_<unsigned char> final = returnImg.end<unsigned char>();
@@ -343,7 +348,7 @@ int main(int argc, char** argv )
 {
     if ( argc != 2 ) //if command line arguments aren't correct
     {
-        printf("usage: DisplayImage.out <Image_Path>\n");
+        printf("usage: Coins.out <Image_Path>\n");
         return -1;
     }
 
@@ -362,7 +367,7 @@ int main(int argc, char** argv )
     gray = grayscale(image); //convert image to grayscale and save into gray matrix
     blur = gaussBlur(gray); //apply gaussian blur to grayscale matrix and save into blur matrix
     //Canny(blur, edges, 50, 250);
-    edges = edgeDetect(blur, 500, 0); //apply edge detection to blur matrix
+    edges = edgeDetect(blur, 50, 30); //apply edge detection to blur matrix  bring upper higher
     namedWindow("edges", CV_WINDOW_NORMAL);
     imshow("edges", edges);
     waitKey(0);

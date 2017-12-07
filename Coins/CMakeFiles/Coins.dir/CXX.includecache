@@ -7,7 +7,7 @@
 #IncludeRegexTransform: 
 
 /Users/maxlord/Google Drive/Computer Vision/Coins/main.cpp
-stdio.h
+cstdio
 -
 opencv2/imgproc/imgproc.hpp
 /Users/maxlord/Google Drive/Computer Vision/Coins/opencv2/imgproc/imgproc.hpp
