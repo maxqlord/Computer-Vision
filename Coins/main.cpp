@@ -6,255 +6,35 @@
 using namespace cv;
 using namespace std;
 
-void sobel(Mat src, Mat1s& dst, int direction)
-{
-    Mat1s kernel;
-    int radius = 0;
-    // Create the kernel
-    if (direction == 0) {
-        // Sobel 3x3 X kernel
-        kernel = (Mat1s(3,3) << -1, 0, +1, -2, 0, +2, -1, 0, +1);
-        radius = 1;
-    } else {
-        // Sobel 3x3 Y kernel
-        kernel = (Mat1s(3, 3) << -1, -2, -1, 0, 0, 0, +1, +2, +1);
-        radius = 1;
-    }
+Mat grayscale(Mat src) {
 
-    // Handle border issues
-    Mat1b _src;
-    copyMakeBorder(src, _src, radius, radius, radius, radius, BORDER_REFLECT101);
 
-    // Create output matrix
-    dst.create(src.rows, src.cols);
+    Mat gray(src.rows, src.cols, CV_8U, Scalar(0));
+    for(int row = 0; row < src.rows; row++) {
+        const uchar *ptr = src.ptr(row);
+        uchar *g = gray.ptr(row);
+        for (int col = 0; col < src.cols; col++) {
 
-    // Convolution loop
+            const uchar * uc_pixel = ptr;
+            uchar * g_pixel = g;
+            int a = uc_pixel[0];
+            int b = uc_pixel[1];
+            int c = uc_pixel[2];
+            uchar grayVal = (uchar)(a*.07 + b*.72 + c*.21);
+            g_pixel[0] = grayVal;
+            ptr += 3;
+            g += 1;
 
-    // Iterate on image
-    for (int r = radius; r < _src.rows - radius; ++r)
-    {
-        for (int c = radius; c < _src.cols - radius; ++c)
-        {
-            short s = 0;
-
-            // Iterate on kernel
-            for (int i = -radius; i <= radius; ++i)
-            {
-                for (int j = -radius; j <= radius; ++j)
-                {
-                    s += _src(r + i, c + j) * kernel(i + radius, j + radius);
-                }
-            }
-            dst(r - radius, c - radius) = s;
+            //printf("%d\n", g[col]);
         }
     }
+
+
+    //cvtColor(src, gray, CV_BGR2GRAY);
+    return gray;
+
+
 }
-
-Mat edgeDetect(Mat src, int upperThreshold, int lowerThreshold, double size = 3) //thresholds are for derivative calcs
-{
-
-    //sobel(src, magX, 0);
-    //sobel(src, magY, 1);
-
-    //sobel holder
-    Mat magX = Mat(src.rows, src.cols, CV_32F);
-    Mat magY = Mat(src.rows, src.cols, CV_32F);
-
-    //calculate sobel into magx and magy
-    cv::Sobel(src, magX, CV_32F, 1, 0, (int)size);
-    cv::Sobel(src, magY, CV_32F, 0, 1, (int)size);
-
-    //calculate slope at all points- divide y derivative by x derivative
-    Mat direction = Mat(src.rows, src.cols, CV_32F);
-    cv::divide(magY, magX, direction);
-
-    //magnitude of gradient at each pixel: sqrt((Gx)^2 + (Gy)^2)
-    //create destination mats
-    Mat sum = Mat(src.rows, src.cols, CV_64F);
-    Mat prodX = Mat(src.rows, src.cols, CV_64F);
-    Mat prodY = Mat(src.rows, src.cols, CV_64F);
-    cv::multiply(magX, magX, prodX); //x derivative squared into prodx
-    cv::multiply(magY, magY, prodY); //y derivative squared into prody
-    sum = prodX + prodY; //x^2 + x^2
-    cv::sqrt(sum, sum); //sqrt all elements in sum
-
-
-    Mat returnImg = Mat(src.rows, src.cols, CV_8U); //instantiate image to output
-
-    returnImg.setTo(cv::Scalar(0)); // Initialize image as a one channel image (filled with 0s)
-
-    // Initialize iterators- magnitude, direction, and return iterators
-    cv::MatIterator_<float> itMag = sum.begin<float>();
-    cv::MatIterator_<double> itDirection = direction.begin<double>();
-
-    cv::MatIterator_<unsigned char> itRet = returnImg.begin<unsigned char>();
-
-    cv::MatIterator_<float> itend = sum.end<float>();
-
-    for (; itMag != itend; ++itDirection, ++itRet, ++itMag) {   //loop through each pixel
-        const cv::Point pos = itRet.pos(); //current pixel
-
-        double currentDirection = atan(*itDirection) * 180 / 3.142; //gradient direction in degrees
-
-        while (currentDirection < 0) currentDirection += 180; //make angle positive if necessary
-
-        *itDirection = currentDirection; //store gradient angle
-
-        if (*itMag < upperThreshold) continue; //if gradient magnitude is not high enough then skip
-
-        bool flag = true; //edge or not - will be edge if it passes following tests
-
-        if (currentDirection > 112.5 && currentDirection <= 157.5) { //edge from top left to bottom right
-            if (pos.y > 0 && pos.x < src.cols - 1 && *itMag <= sum.at<float>(pos.y - 1, pos.x + 1))
-                flag = false; //if magnitude lower than top right (w/ bound check)
-            if (pos.y < src.rows - 1 && pos.x > 0 && *itMag <= sum.at<float>(pos.y + 1, pos.x - 1))
-                flag = false; //if magnitude lower than bottom left (w/ bound check)
-        } else if (currentDirection > 67.5 && currentDirection <= 112.5) {
-            if (pos.y > 0 && *itMag <= sum.at<float>(pos.y - 1, pos.x)) flag = false;
-            if (pos.y < src.rows - 1 && *itMag <= sum.at<float>(pos.y + 1, pos.x)) flag = false;
-        } else if (currentDirection > 22.5 && currentDirection <= 67.5) {
-            if (pos.y > 0 && pos.x > 0 && *itMag <= sum.at<float>(pos.y - 1, pos.x - 1)) flag = false;
-            if (pos.y < src.rows - 1 && pos.x < src.cols - 1 && *itMag <= sum.at<float>(pos.y + 1, pos.x + 1))
-                flag = false;
-        } else {
-            if (pos.x > 0 && *itMag <= sum.at<float>(pos.y, pos.x - 1)) flag = false;
-            if (pos.x < src.cols - 1 && *itMag <= sum.at<float>(pos.y, pos.x + 1)) flag = false;
-        }
-
-        if (flag) { //if still an edge make white
-            *itRet = 255;
-            //printf("Edge");
-        }
-    }
-
-    // Step 4: Hysterysis threshold
-    bool imageChanged = true; //if image changed- will be set to true if new edge pixels found
-    int i = 0; //counter
-    while (imageChanged) {
-        imageChanged = false;
-        printf("Iteration %d", i);
-        i++;
-        itMag = sum.begin<float>();
-        itDirection = direction.begin<double>();
-        itRet = returnImg.begin<unsigned char>();
-        itend = sum.end<float>();
-        for (; itMag != itend; ++itMag, ++itDirection, ++itRet) {
-            cv::Point pos = itRet.pos();
-            if (pos.x < 2 || pos.x >= src.cols - 2 || pos.y < 2 || pos.y >= src.rows - 2)
-                continue;
-            float currentDirection = *itDirection;
-
-            // Do we have a pixel we already know as an edge?
-            if (*itRet == 255) {
-                *itRet = (unsigned char) 64;
-                if (currentDirection > 112.5 && currentDirection <= 157.5) {
-                    if (pos.y > 0 && pos.x > 0) {
-                        if (lowerThreshold <= sum.at<float>(pos.y - 1, pos.x - 1) &&
-                            returnImg.at<unsigned char>(pos.y - 1, pos.x - 1) != 64 &&
-                            direction.at<float>(pos.y - 1, pos.x - 1) > 112.5 &&
-                            direction.at<float>(pos.y - 1, pos.x - 1) <= 157.5 &&
-                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y - 2, pos.x) &&
-                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y, pos.x - 2)) {
-                            returnImg.ptr<unsigned char>(pos.y - 1, pos.x - 1)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                    if (pos.y < src.rows - 1 && pos.x < src.cols - 1) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y + 1)) &&
-                            returnImg.at<unsigned char>(pos.y + 1, pos.x + 1) != 64 &&
-                            direction.at<float>(pos.y + 1, pos.x + 1) > 112.5 &&
-                            direction.at<float>(pos.y + 1, pos.x + 1) <= 157.5 &&
-                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y + 2, pos.x) &&
-                            sum.at<float>(pos.y - 1, pos.x - 1) > sum.at<float>(pos.y, pos.x + 2)) {
-                            returnImg.ptr<unsigned char>(pos.y + 1, pos.x + 1)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                } else if (currentDirection > 67.5 && currentDirection <= 112.5) {
-                    if (pos.x > 0) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x - 1, pos.y)) &&
-                            returnImg.at<unsigned char>(pos.y, pos.x - 1) != 64 &&
-                            direction.at<float>(pos.y, pos.x - 1) > 67.5 &&
-                            direction.at<float>(pos.y, pos.x - 1) <= 112.5 &&
-                            sum.at<float>(pos.y, pos.x - 1) > sum.at<float>(pos.y - 1, pos.x - 1) &&
-                            sum.at<float>(pos.y, pos.x - 1) > sum.at<float>(pos.y + 1, pos.x - 1)) {
-                            returnImg.ptr<unsigned char>(pos.y, pos.x - 1)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                    if (pos.x < src.cols - 1) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y)) &&
-                            returnImg.at<unsigned char>(pos.y, pos.x + 1) != 64 &&
-                            direction.at<float>(pos.y, pos.x + 1) > 67.5 &&
-                            direction.at<float>(pos.y, pos.x + 1) <= 112.5 &&
-                            sum.at<float>(pos.y, pos.x + 1) > sum.at<float>(pos.y - 1, pos.x + 1) &&
-                            sum.at<float>(pos.y, pos.x + 1) > sum.at<float>(pos.y + 1, pos.x + 1)) {
-                            returnImg.ptr<unsigned char>(pos.y, pos.x + 1)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                } else if (currentDirection > 22.5 && currentDirection <= 67.5) {
-                    if (pos.y > 0 && pos.x < src.cols - 1) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x + 1, pos.y - 1)) &&
-                            returnImg.at<unsigned char>(pos.y - 1, pos.x + 1) != 64 &&
-                            direction.at<float>(pos.y - 1, pos.x + 1) > 22.5 &&
-                            direction.at<float>(pos.y - 1, pos.x + 1) <= 67.5 &&
-                            sum.at<float>(pos.y - 1, pos.x + 1) > sum.at<float>(pos.y - 2, pos.x) &&
-                            sum.at<float>(pos.y - 1, pos.x + 1) > sum.at<float>(pos.y, pos.x + 2)) {
-                            returnImg.ptr<unsigned char>(pos.y - 1, pos.x + 1)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                    if (pos.y < src.rows - 1 && pos.x > 0) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x - 1, pos.y + 1)) &&
-                            returnImg.at<unsigned char>(pos.y + 1, pos.x - 1) != 64 &&
-                            direction.at<float>(pos.y + 1, pos.x - 1) > 22.5 &&
-                            direction.at<float>(pos.y + 1, pos.x - 1) <= 67.5 &&
-                            sum.at<float>(pos.y + 1, pos.x - 1) > sum.at<float>(pos.y, pos.x - 2) &&
-                            sum.at<float>(pos.y + 1, pos.x - 1) > sum.at<float>(pos.y + 2, pos.x)) {
-                            returnImg.ptr<unsigned char>(pos.y + 1, pos.x - 1)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                } else {
-                    if (pos.y > 0) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x, pos.y - 1)) &&
-                            returnImg.at<unsigned char>(pos.y - 1, pos.x) != 64 &&
-                            (direction.at<float>(pos.y - 1, pos.x) < 22.5 ||
-                             direction.at<float>(pos.y - 1, pos.x) >= 157.5) &&
-                            sum.at<float>(pos.y - 1, pos.x) > sum.at<float>(pos.y - 1, pos.x - 1) &&
-                            sum.at<float>(pos.y - 1, pos.x) > sum.at<float>(pos.y - 1, pos.x + 2)) {
-                            returnImg.ptr<unsigned char>(pos.y - 1, pos.x)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                    if (pos.y < src.rows - 1) {
-                        if (lowerThreshold <= sum.at<float>(cv::Point(pos.x, pos.y + 1)) &&
-                            returnImg.at<unsigned char>(pos.y + 1, pos.x) != 64 &&
-                            (direction.at<float>(pos.y + 1, pos.x) < 22.5 ||
-                             direction.at<float>(pos.y + 1, pos.x) >= 157.5) &&
-                            sum.at<float>(pos.y + 1, pos.x) > sum.at<float>(pos.y + 1, pos.x - 1) &&
-                            sum.at<float>(pos.y + 1, pos.x) > sum.at<float>(pos.y + 1, pos.x + 1)) {
-                            returnImg.ptr<unsigned char>(pos.y + 1, pos.x)[0] = 255;
-                            imageChanged = true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    cv::MatIterator_<unsigned char> current = returnImg.begin<unsigned char>();
-    cv::MatIterator_<unsigned char> final = returnImg.end<unsigned char>();
-    for (; current != final; ++current) {
-        if (*current == 64)
-            *current = 255;
-    }
-    return returnImg;
-
-        //Canny(src, edges, lowerThreshold, upperThreshold);
-}
-
-
 
 Mat gaussBlur(Mat src) {
     /*
@@ -287,39 +67,265 @@ Mat gaussBlur(Mat src) {
     return gauss;
 }
 
-Mat grayscale(Mat src) {
+Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are for derivative calcs
+{
+
+    //sobel(src, magX, 0);
+    //sobel(src, sobelY, 1);
+
+    //sobel holder
+    Mat sobelX = Mat(src.rows, src.cols, CV_32F);
+    Mat sobelY = Mat(src.rows, src.cols, CV_32F);
+
+    //calculate sobel into magx and sobelY
+    cv::Sobel(src, sobelX, CV_32F, 1, 0, (int)size);
+    cv::Sobel(src, sobelY, CV_32F, 0, 1, (int)size);
+
+    //calculate slope at all points- divide y derivative by x derivative
+    Mat angle = Mat(src.rows, src.cols, CV_32F);
+    cv::divide(sobelY, sobelX, angle);
+
+    //magnitude of gradient at each pixel: sqrt((Gx)^2 + (Gy)^2)
+    //create destination mats
+    Mat sum = Mat(src.rows, src.cols, CV_64F);
+    Mat dstX = Mat(src.rows, src.cols, CV_64F);
+    Mat dstY = Mat(src.rows, src.cols, CV_64F);
+    cv::multiply(sobelX, sobelX, dstX); //x derivative squared into dstX
+    cv::multiply(sobelY, sobelY, dstY); //y derivative squared into dstY
+    sum = dstX + dstY; //x^2 + x^2
+    cv::sqrt(sum, sum); //sqrt all elements in sum
 
 
-    Mat gray(src.rows, src.cols, CV_8U, Scalar(0));
-    for(int row = 0; row < src.rows; row++) {
-        const uchar *ptr = src.ptr(row);
-        uchar *g = gray.ptr(row);
-        for (int col = 0; col < src.cols; col++) {
+    Mat finalImg = Mat(src.rows, src.cols, CV_8U); //instantiate image to output
 
-            const uchar * uc_pixel = ptr;
-            uchar * g_pixel = g;
-            int a = uc_pixel[0];
-            int b = uc_pixel[1];
-            int c = uc_pixel[2];
-            uchar grayVal = (uchar)(a*.07 + b*.72 + c*.21);
-            g_pixel[0] = grayVal;
-            ptr += 3;
-            g += 1;
+    finalImg.setTo(cv::Scalar(0)); // Initialize image as a one channel image (filled with 0s)
 
-            //printf("%d\n", g[col]);
+    // Initialize iterators- magnitude, angle, and return iterators
+    cv::MatIterator_<float> sobelIterator = sum.begin<float>();
+    cv::MatIterator_<double> angleIterator = angle.begin<double>();
+
+    cv::MatIterator_<unsigned char> finalIterator = finalImg.begin<unsigned char>();
+
+    cv::MatIterator_<float> endIterator = sum.end<float>();
+
+    for (; sobelIterator != endIterator; ++angleIterator, ++finalIterator, ++sobelIterator) {   //loop through each pixel
+        const cv::Point p = finalIterator.pos(); //current pixel
+
+        double currentangle = atan(*angleIterator) * 180 / 3.142; //gradient angle in degrees
+
+        while (currentangle < 0) currentangle += 180; //make angle pitive if necessary
+
+        *angleIterator = currentangle; //store gradient angle
+
+        if (*sobelIterator < upper) continue; //if gradient magnitude is not high enough then skip
+
+        bool isEdge = true; //edge or not - will be edge if it passes following tests
+
+        if (currentangle > 112.5 && currentangle <= 157.5) { //edge from top left to bottom right
+            if (p.y > 0 && p.x < src.cols - 1 && *sobelIterator <= sum.at<float>(p.y - 1, p.x + 1)) {
+                isEdge = false; //if magnitude lower than top right (w/ bound check)
+            }
+            if (p.y < src.rows - 1 && p.x > 0 && *sobelIterator <= sum.at<float>(p.y + 1, p.x - 1)) {
+                isEdge = false; //if magnitude lower than bottom left (w/ bound check)
+            }
+
+        } else if (currentangle > 67.5 && currentangle <= 112.5) {
+            if (p.y > 0 && *sobelIterator <= sum.at<float>(p.y - 1, p.x)) {
+                isEdge = false;
+            }
+            if (p.y < src.rows - 1 && *sobelIterator <= sum.at<float>(p.y + 1, p.x)) {
+                isEdge = false;
+            }
+
+        } else if (currentangle > 22.5 && currentangle <= 67.5) {
+            if (p.y > 0 && p.x > 0 && *sobelIterator <= sum.at<float>(p.y - 1, p.x - 1)) {
+                isEdge = false;
+            }
+            if (p.y < src.rows - 1 && p.x < src.cols - 1 && *sobelIterator <= sum.at<float>(p.y + 1, p.x + 1)) {
+                isEdge = false;
+            }
+
+        } else {
+            if (p.x > 0 && *sobelIterator <= sum.at<float>(p.y, p.x - 1)) {
+                isEdge = false;
+            }
+            if (p.x < src.cols - 1 && *sobelIterator <= sum.at<float>(p.y, p.x + 1)) {
+                isEdge = false;
+            }
+        }
+
+        if (isEdge) { //if still an edge make white
+            *finalIterator = 255;
+            //printf("Edge");
         }
     }
 
+    // Step 4: Hysterysis threshold
+    bool change = true; //if image changed- will be set to true if new edge pixels found
+    int counter = 0; //counter
+    while (change) {
+        change = false;
+        //printf("Iteration %d", i);
+        counter++;
+        sobelIterator = sum.begin<float>();
+        angleIterator = angle.begin<double>();
+        finalIterator = finalImg.begin<unsigned char>();
+        endIterator = sum.end<float>();
+        for (; sobelIterator != endIterator; ++sobelIterator, ++angleIterator, ++finalIterator) {
+            cv::Point p = finalIterator.pos();
+            if (p.x < 2 || p.x >= src.cols - 2 || p.y < 2 || p.y >= src.rows - 2)
+                continue;
+            float currentangle = *angleIterator;
 
-    //cvtColor(src, gray, CV_BGR2GRAY);
-    return gray;
+            // Do we have a pixel we already know as an edge?
+            if (*finalIterator == 255) {
+                *finalIterator = (unsigned char) 64;
+                if (currentangle > 112.5 && currentangle <= 157.5) {
+                    if (p.y > 0 && p.x > 0) {
+                        if (lower <= sum.at<float>(p.y - 1, p.x - 1) &&
+                            finalImg.at<unsigned char>(p.y - 1, p.x - 1) != 64 &&
+                            angle.at<float>(p.y - 1, p.x - 1) > 112.5 &&
+                            angle.at<float>(p.y - 1, p.x - 1) <= 157.5 &&
+                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y - 2, p.x) &&
+                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y, p.x - 2)) {
+                            finalImg.ptr<unsigned char>(p.y - 1, p.x - 1)[0] = 255;
+                            change = true;
+                        }
+                    }
+                    if (p.y < src.rows - 1 && p.x < src.cols - 1) {
+                        if (lower <= sum.at<float>(cv::Point(p.x + 1, p.y + 1)) &&
+                            finalImg.at<unsigned char>(p.y + 1, p.x + 1) != 64 &&
+                            angle.at<float>(p.y + 1, p.x + 1) > 112.5 &&
+                            angle.at<float>(p.y + 1, p.x + 1) <= 157.5 &&
+                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y + 2, p.x) &&
+                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y, p.x + 2)) {
+                            finalImg.ptr<unsigned char>(p.y + 1, p.x + 1)[0] = 255;
+                            change = true;
+                        }
+                    }
+                } else if (currentangle > 67.5 && currentangle <= 112.5) {
+                    if (p.x > 0) {
+                        if (lower <= sum.at<float>(cv::Point(p.x - 1, p.y)) &&
+                            finalImg.at<unsigned char>(p.y, p.x - 1) != 64 &&
+                            angle.at<float>(p.y, p.x - 1) > 67.5 &&
+                            angle.at<float>(p.y, p.x - 1) <= 112.5 &&
+                            sum.at<float>(p.y, p.x - 1) > sum.at<float>(p.y - 1, p.x - 1) &&
+                            sum.at<float>(p.y, p.x - 1) > sum.at<float>(p.y + 1, p.x - 1)) {
+                            finalImg.ptr<unsigned char>(p.y, p.x - 1)[0] = 255;
+                            change = true;
+                        }
+                    }
+                    if (p.x < src.cols - 1) {
+                        if (lower <= sum.at<float>(cv::Point(p.x + 1, p.y)) &&
+                            finalImg.at<unsigned char>(p.y, p.x + 1) != 64 &&
+                            angle.at<float>(p.y, p.x + 1) > 67.5 &&
+                            angle.at<float>(p.y, p.x + 1) <= 112.5 &&
+                            sum.at<float>(p.y, p.x + 1) > sum.at<float>(p.y - 1, p.x + 1) &&
+                            sum.at<float>(p.y, p.x + 1) > sum.at<float>(p.y + 1, p.x + 1)) {
+                            finalImg.ptr<unsigned char>(p.y, p.x + 1)[0] = 255;
+                            change = true;
+                        }
+                    }
+                } else if (currentangle > 22.5 && currentangle <= 67.5) {
+                    if (p.y > 0 && p.x < src.cols - 1) {
+                        if (lower <= sum.at<float>(cv::Point(p.x + 1, p.y - 1)) &&
+                            finalImg.at<unsigned char>(p.y - 1, p.x + 1) != 64 &&
+                            angle.at<float>(p.y - 1, p.x + 1) > 22.5 &&
+                            angle.at<float>(p.y - 1, p.x + 1) <= 67.5 &&
+                            sum.at<float>(p.y - 1, p.x + 1) > sum.at<float>(p.y - 2, p.x) &&
+                            sum.at<float>(p.y - 1, p.x + 1) > sum.at<float>(p.y, p.x + 2)) {
+                            finalImg.ptr<unsigned char>(p.y - 1, p.x + 1)[0] = 255;
+                            change = true;
+                        }
+                    }
+                    if (p.y < src.rows - 1 && p.x > 0) {
+                        if (lower <= sum.at<float>(cv::Point(p.x - 1, p.y + 1)) &&
+                            finalImg.at<unsigned char>(p.y + 1, p.x - 1) != 64 &&
+                            angle.at<float>(p.y + 1, p.x - 1) > 22.5 &&
+                            angle.at<float>(p.y + 1, p.x - 1) <= 67.5 &&
+                            sum.at<float>(p.y + 1, p.x - 1) > sum.at<float>(p.y, p.x - 2) &&
+                            sum.at<float>(p.y + 1, p.x - 1) > sum.at<float>(p.y + 2, p.x)) {
+                            finalImg.ptr<unsigned char>(p.y + 1, p.x - 1)[0] = 255;
+                            change = true;
+                        }
+                    }
+                } else {
+                    if (p.y > 0) {
+                        if (lower <= sum.at<float>(cv::Point(p.x, p.y - 1)) &&
+                            finalImg.at<unsigned char>(p.y - 1, p.x) != 64 &&
+                            (angle.at<float>(p.y - 1, p.x) < 22.5 ||
+                             angle.at<float>(p.y - 1, p.x) >= 157.5) &&
+                            sum.at<float>(p.y - 1, p.x) > sum.at<float>(p.y - 1, p.x - 1) &&
+                            sum.at<float>(p.y - 1, p.x) > sum.at<float>(p.y - 1, p.x + 2)) {
+                            finalImg.ptr<unsigned char>(p.y - 1, p.x)[0] = 255;
+                            change = true;
+                        }
+                    }
+                    if (p.y < src.rows - 1) {
+                        if (lower <= sum.at<float>(cv::Point(p.x, p.y + 1)) &&
+                            finalImg.at<unsigned char>(p.y + 1, p.x) != 64 &&
+                            (angle.at<float>(p.y + 1, p.x) < 22.5 ||
+                             angle.at<float>(p.y + 1, p.x) >= 157.5) &&
+                            sum.at<float>(p.y + 1, p.x) > sum.at<float>(p.y + 1, p.x - 1) &&
+                            sum.at<float>(p.y + 1, p.x) > sum.at<float>(p.y + 1, p.x + 1)) {
+                            finalImg.ptr<unsigned char>(p.y + 1, p.x)[0] = 255;
+                            change = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    cv::MatIterator_<unsigned char> current = finalImg.begin<unsigned char>();
+    cv::MatIterator_<unsigned char> final = finalImg.end<unsigned char>();
+    for (; current != final; ++current) {
+        if (*current == 64)
+            *current = 255;
+    }
+    return finalImg;
 
-
+        //Canny(src, edges, lower, upper);
 }
+
+
+
 
 vector<Vec3f> houghTransform(Mat src, vector<Vec3f> circles) {
     HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/8 );
     return circles;
+}
+
+void sobel(Mat1b src, int angle)
+{
+    Mat1s kernel;
+    Mat1s out;
+    int r = 0;
+    if (angle == 0) {
+        kernel = (Mat1s(3,3) << -1, 0, +1, -2, 0, +2, -1, 0, +1);
+        r = 1;
+    } else {
+        kernel = (Mat1s(3, 3) << -1, -2, -1, 0, 0, 0, +1, +2, +1);
+        r = 1;
+    }
+
+    copyMakeBorder(src, src, r, r, r, r, BORDER_REFLECT101);
+    out.create(src.rows, src.cols);
+    for (int row = r; row < src.rows - r; row++)
+    {
+        for (int c = r; c < src.cols - r; c++)
+        {
+            short s = 0;
+
+            for (int x = -r; x <= r; x++)
+            {
+                for (int y = -r; y <= r; y++)
+                {
+                    s += src(row + x, c + y) * kernel(x + r, y + r);
+                }
+            }
+            out(row - r, c - r) = s;
+        }
+    }
 }
 
 double countMoney(vector<Vec3f> circles, Mat img) {
@@ -367,7 +373,7 @@ int main(int argc, char** argv )
     gray = grayscale(image); //convert image to grayscale and save into gray matrix
     blur = gaussBlur(gray); //apply gaussian blur to grayscale matrix and save into blur matrix
     //Canny(blur, edges, 50, 250);
-    edges = edgeDetect(blur, 50, 30); //apply edge detection to blur matrix  bring upper higher
+    edges = edgeDetect(blur, 100, 50); //apply edge detection to blur matrix  bring upper higher   //50 30
     namedWindow("edges", CV_WINDOW_NORMAL);
     imshow("edges", edges);
     waitKey(0);
