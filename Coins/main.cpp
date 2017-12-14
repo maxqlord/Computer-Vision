@@ -167,11 +167,13 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
         change = false;
         //printf("Iteration %d", i);
         counter++;
+        //initialize iterators
         sobelIterator = sum.begin<float>();
         angleIterator = angle.begin<double>();
         finalIterator = finalImg.begin<unsigned char>();
         endIterator = sum.end<float>();
         for (; sobelIterator != endIterator; ++sobelIterator, ++angleIterator, ++finalIterator) {
+            //get pixel gradient direction and position
             cv::Point p = finalIterator.pos();
             if (p.x < 2 || p.x >= src.cols - 2 || p.y < 2 || p.y >= src.rows - 2)
                 continue;
@@ -179,15 +181,25 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
 
             // Do we have a pixel we already know as an edge?
             if (*finalIterator == 255) {
+                //pixel already known to be an edge
                 *finalIterator = (unsigned char) 64;
+                /*
+
+
+                The condition used in nonmaximum suppression still holds
+                For (x-1, y-1) this means checking against (x, y-2) and (x-2, y)
+                For (x+1, y+1) this means checking against the (x, y+2) and (x+2, y)
+                 */
+                //check if pixels (x-1, y-1) and (x+1, y+1) are edge pixels
                 if (currentangle > 112.5 && currentangle <= 157.5) {
                     if (p.y > 0 && p.x > 0) {
+                        //The gradient magnitude at these points is greater than the lower threshold
                         if (lower <= sum.at<float>(p.y - 1, p.x - 1) &&
-                            finalImg.at<unsigned char>(p.y - 1, p.x - 1) != 64 &&
-                            angle.at<float>(p.y - 1, p.x - 1) > 112.5 &&
+                            finalImg.at<unsigned char>(p.y - 1, p.x - 1) != 64 && //hasn't already been checked
+                            angle.at<float>(p.y - 1, p.x - 1) > 112.5 &&  //check if direction at pixel is same direction as currentangle
                             angle.at<float>(p.y - 1, p.x - 1) <= 157.5 &&
-                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y - 2, p.x) &&
-                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y, p.x - 2)) {
+                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y - 2, p.x) &&  //For (x-1, y-1) check against (x, y-2) and (x-2, y)
+                            sum.at<float>(p.y - 1, p.x - 1) > sum.at<float>(p.y, p.x - 2)) {  // For (x+1, y+1) check against the (x, y+2) and (x+2, y)
                             finalImg.ptr<unsigned char>(p.y - 1, p.x - 1)[0] = 255;
                             change = true;
                         }
@@ -278,6 +290,7 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
     }
     cv::MatIterator_<unsigned char> current = finalImg.begin<unsigned char>();
     cv::MatIterator_<unsigned char> final = finalImg.end<unsigned char>();
+    //switch already existing edge pixels back to edges
     for (; current != final; ++current) {
         if (*current == 64)
             *current = 255;
@@ -291,7 +304,7 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
 
 
 vector<Vec3f> houghTransform(Mat src, vector<Vec3f> circles) {
-    HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/8 );
+    HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/16 );
     return circles;
 }
 
@@ -335,11 +348,26 @@ double countMoney(vector<Vec3f> circles, Mat img) {
     for( int i = 0; i < circles.size(); i++ ) {
         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         double radius = circles[i][2];
-        printf("%d\t%d\t%f\n", center.x, center.y, radius);
+        //printf("%d\t%d\t%f\n", center.x, center.y, radius);
         radii.push_back(radius);
         //circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
         // draw the circle outline
         //circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
+    }
+    for(int j = 0; j < radii.size(); j++) {
+        if(radii[j] < 100) {
+            counter += .1;
+        } else if(radii[j] < 200) {
+            counter += .01;
+        } else if(radii[j] < 600) {
+            counter += .05;
+        } else if(radii[j] < 1000) {
+            counter += .25;
+        } else if(radii[j] < 600) {
+            counter += 1;
+        } else {
+            counter += .5;
+        }
     }
 
         /*
@@ -374,13 +402,15 @@ int main(int argc, char** argv )
     blur = gaussBlur(gray); //apply gaussian blur to grayscale matrix and save into blur matrix
     //Canny(blur, edges, 50, 250);
     edges = edgeDetect(blur, 100, 50); //apply edge detection to blur matrix  bring upper higher   //50 30
-    namedWindow("edges", CV_WINDOW_NORMAL);
-    imshow("edges", edges);
-    waitKey(0);
-
-    //circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
-    //money = countMoney(circles, gray); //count the money from the circles
-    //printf("Total: %f\n", money);
+    //namedWindow("edges", CV_WINDOW_NORMAL);
+    //imshow("edges", edges);
+    //waitKey(0);
+    //printf("test\n");
+    circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
+    //printf("test2\n");
+    money = countMoney(circles, gray); //count the money from the circles
+    //printf("test3\n");
+    printf("Total: %f\n", money);
 
 
 
