@@ -13,7 +13,7 @@
 -- Detecting CXX compiler ABI info - done
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Found OpenCV: /usr/local (found version "3.3.1") 
+-- Found OpenCV: /usr/local (found version "3.4.0") 
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /Users/maxlord/Google Drive/Computer Vision/Coins

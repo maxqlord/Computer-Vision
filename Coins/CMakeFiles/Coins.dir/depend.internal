@@ -80,6 +80,7 @@ CMakeFiles/Coins.dir/main.cpp.o
  /usr/local/include/opencv2/imgproc/imgproc_c.h
  /usr/local/include/opencv2/imgproc/types_c.h
  /usr/local/include/opencv2/ml.hpp
+ /usr/local/include/opencv2/ml/ml.inl.hpp
  /usr/local/include/opencv2/objdetect.hpp
  /usr/local/include/opencv2/objdetect/detection_based_tracker.hpp
  /usr/local/include/opencv2/objdetect/objdetect_c.h

@@ -34,10 +34,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/local/Cellar/cmake/3.10.0/bin/cmake
+CMAKE_COMMAND = /usr/local/Cellar/cmake/3.10.1/bin/cmake
 
 # The command to remove a file.
-RM = /usr/local/Cellar/cmake/3.10.0/bin/cmake -E remove -f
+RM = /usr/local/Cellar/cmake/3.10.1/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -90,48 +90,48 @@ Coins_EXTERNAL_OBJECTS =
 
 Coins: CMakeFiles/Coins.dir/main.cpp.o
 Coins: CMakeFiles/Coins.dir/build.make
-Coins: /usr/local/lib/libopencv_stitching.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_superres.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_videostab.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_aruco.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_bgsegm.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_bioinspired.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_ccalib.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_dpm.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_face.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_fuzzy.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_img_hash.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_line_descriptor.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_optflow.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_reg.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_rgbd.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_saliency.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_stereo.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_structured_light.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_surface_matching.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_tracking.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_xfeatures2d.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_ximgproc.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_xobjdetect.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_xphoto.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_shape.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_photo.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_calib3d.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_phase_unwrapping.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_video.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_datasets.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_plot.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_text.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_dnn.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_features2d.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_flann.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_highgui.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_ml.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_videoio.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_imgcodecs.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_objdetect.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_imgproc.3.3.1.dylib
-Coins: /usr/local/lib/libopencv_core.3.3.1.dylib
+Coins: /usr/local/lib/libopencv_stitching.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_superres.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_videostab.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_aruco.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_bgsegm.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_bioinspired.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_ccalib.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_dpm.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_face.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_fuzzy.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_img_hash.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_line_descriptor.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_optflow.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_reg.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_rgbd.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_saliency.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_stereo.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_structured_light.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_surface_matching.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_tracking.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_xfeatures2d.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_ximgproc.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_xobjdetect.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_xphoto.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_shape.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_photo.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_datasets.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_plot.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_text.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_dnn.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_ml.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_video.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_calib3d.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_features2d.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_highgui.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_videoio.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_phase_unwrapping.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_flann.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_imgcodecs.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_objdetect.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_imgproc.3.4.0.dylib
+Coins: /usr/local/lib/libopencv_core.3.4.0.dylib
 Coins: CMakeFiles/Coins.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/Users/maxlord/Google Drive/Computer Vision/Coins/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable Coins"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Coins.dir/link.txt --verbose=$(VERBOSE)

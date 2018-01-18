@@ -871,6 +871,10 @@ map
 -
 iostream
 -
+opencv2/ml/ml.inl.hpp
+-
+
+/usr/local/include/opencv2/ml/ml.inl.hpp
 
 /usr/local/include/opencv2/objdetect.hpp
 opencv2/core.hpp

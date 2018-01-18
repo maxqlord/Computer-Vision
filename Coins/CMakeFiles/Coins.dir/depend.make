@@ -79,6 +79,7 @@ CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/imgproc/imgproc.hpp
 CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/imgproc/imgproc_c.h
 CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/imgproc/types_c.h
 CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/ml.hpp
+CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/ml/ml.inl.hpp
 CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/objdetect.hpp
 CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/objdetect/detection_based_tracker.hpp
 CMakeFiles/Coins.dir/main.cpp.o: /usr/local/include/opencv2/objdetect/objdetect_c.h
