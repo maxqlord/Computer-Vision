@@ -9,7 +9,9 @@ using namespace std;
 Mat grayscale(Mat src) {
 
 
-    Mat gray(src.rows, src.cols, CV_8U, Scalar(0));
+    Mat gray(src.rows, src.cols, CV_8U, Scalar(0,0,0));
+
+    
     for(int row = 0; row < src.rows; row++) {
         const uchar *ptr = src.ptr(row);
         uchar *g = gray.ptr(row);
@@ -118,7 +120,7 @@ Mat sobel(Mat src, int angle)
     }
 
 
-    //GaussianBlur(src, dst, ksize, sigmaX, sigmaY);
+
     sobel.convertTo(sobel, CV_32F); //1.0/255.0
     return sobel;
 }
@@ -130,10 +132,11 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
     //sobel(src, sobelY, 1);
 
     //sobel holder
+    Mat sobelX = Mat(src.rows, src.cols, 1, CV_32F); //sobel(src, 1); //horizontal //Mat sobelX = sobel(src, 1);
+    Mat sobelY = Mat(src.rows, src.cols, 0, CV_32F);//sobel(src, 0);//Mat(src.rows, src.cols, 0, CV_32F); //sobel(src, 0); //vertical
+    Sobel(src, sobelX, CV_32F, 1, 0, (int)size);
+    Sobel(src, sobelY, CV_32F, 0, 1, (int)size);
 
-
-    Mat sobelX = sobel(src, 1); //horizontal
-    Mat sobelY = sobel(src, 0); //vertical
 
 
     //calculate sobel into magx and sobelY
@@ -160,9 +163,12 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
     //sum.convertTo(sum, CV_64F, 1.0 / 255.0);
     //sum.convertTo(sum, CV_64F, 1.0 / 255.0);
     cv::sqrt(sum, sum); //sqrt all elements in sum   //DOES NOT WORK WITH 8U-convert to float
-    /*namedWindow("mysobel", CV_WINDOW_NORMAL);
-    imshow("mysobel", sum);
-*/
+    Mat output;
+    resize(sum, output, Size(), .2,.2);
+    namedWindow("mysobel", CV_WINDOW_NORMAL);
+    imshow("mysobel", output);
+    waitKey(7000);
+
 
 
     Mat finalImg = Mat(src.rows, src.cols, CV_8U); //instantiate image to output
@@ -372,7 +378,7 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
 
 
 vector<Vec3f> houghTransform(Mat src, vector<Vec3f> circles) {
-    HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/16 );
+    HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/30, 1, 180,0,0);
     return circles;
 }
 
@@ -385,11 +391,10 @@ double countMoney(vector<Vec3f> circles, Mat img) {
     for( int i = 0; i < circles.size(); i++ ) {
         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         double radius = circles[i][2];
-        //printf("%d\t%d\t%f\n", center.x, center.y, radius);
+        printf("%d\t%d\t%f\n", center.x, center.y, radius);
         radii.push_back(radius);
-        //circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
-        // draw the circle outline
-        //circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
+        circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
+        circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
     }
     for(int j = 0; j < radii.size(); j++) {
         if(radii[j] < 100) {
@@ -407,6 +412,11 @@ double countMoney(vector<Vec3f> circles, Mat img) {
         }
     }
 
+    /// Show your results
+    namedWindow( "Hough Circle Transform Demo", CV_WINDOW_AUTOSIZE );
+    imshow( "Hough Circle Transform Demo", img );
+
+    waitKey(0);
         /*
         // draw the circle center
 
@@ -414,7 +424,7 @@ double countMoney(vector<Vec3f> circles, Mat img) {
 
     return counter;
 }
-string type2str(int type) {
+string type2str(int type) {  //detects number of channels and data type- https://stackoverflow.com/questions/10167534
     string r;
 
     uchar depth = type & CV_MAT_DEPTH_MASK;
@@ -463,17 +473,20 @@ int main(int argc, char** argv )
     printf("Matrix: %s %dx%d \n", ty.c_str(), gray.cols, gray.rows );
     blur = gaussBlur(gaussBlur(gaussBlur(gaussBlur(gray)))); //apply gaussian blur to grayscale matrix and save into blur matrix
     //Canny(blur, edges, 50, 250);
-    edges = edgeDetect(blur, 350 , 1000); //apply edge detection to blur matrix  bring upper higher   //50 30
+
+    edges = edgeDetect(blur, 100 , 20); //apply edge detection to blur matrix  bring upper higher   //50 30
+    Mat output;
+    resize(edges, output, Size(), .2,.2);
     namedWindow("edges", CV_WINDOW_NORMAL);
-    imshow("edges", edges);
+    imshow("edges", output);
     waitKey(0);
     //printf("test\n");
-    circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
+    //circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
     //printf("test2\n");
-    money = countMoney(circles, gray); //count the money from the circles
+    //money = countMoney(circles, gray); //count the money from the circles
     //printf("test3\n");
-    printf("Total: %f\n", money);
-
+    //printf("Total: %f\n", money);
+//2.33
 
 
     return 0;
