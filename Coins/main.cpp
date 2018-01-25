@@ -6,6 +6,8 @@
 using namespace cv;
 using namespace std;
 
+int accumulator[5000][5000];
+
 Mat grayscale(Mat src) {
 
     Mat gray = src.clone();
@@ -164,7 +166,7 @@ Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thre
 
     Mat finalImg = Mat(src.rows, src.cols, CV_8U); //instantiate image to output
 
-    finalImg.setTo(cv::Scalar(0)); // Initialize image as a one channel image (filled with 0s)
+    finalImg.setTo(cv::Scalar(0)); // Initialize image as a three channel image (filled with 0s)
 
     // Initialize iterators- magnitude, angle, and return iterators
     cv::MatIterator_<float> sobelIterator = sum.begin<float>();
@@ -183,7 +185,10 @@ Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thre
 
         *angleIterator = currentangle; //store gradient angle
 
+
         if (*sobelIterator < upper) continue; //if gradient magnitude is not high enough then skip
+
+
 
         bool isEdge = true; //edge or not - will be edge if it passes following tests
 
@@ -224,9 +229,13 @@ Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thre
             *finalIterator = 255;
             //printf("Edge");
         }
+        else {
+            *finalIterator = 0;
+        }
     }
     //threshold
     // Step 4: Hysterysis threshold
+
     bool change = true; //if image changed- will be set to true if new edge pixels found
     int counter = 0; //counter
     while (change) {
@@ -251,11 +260,7 @@ Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thre
                 *finalIterator = (unsigned char) 64;
 
 
-                /*
-                The condition used in nonmaximum suppression still holds
-                For (x-1, y-1) this means checking against (x, y-2) and (x-2, y)
-                For (x+1, y+1) this means checking against the (x, y+2) and (x+2, y)
-                 check if pixels (x-1, y-1) and (x+1, y+1) are edge pixels*/
+
                 if (currentangle > 112.5 && currentangle <= 157.5) {
                     if (p.y > 0 && p.x > 0) {
                         //The gradient magnitude at these points is greater than the lower threshold
@@ -352,6 +357,7 @@ Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thre
                 }
             }
         }
+
     }
     cv::MatIterator_<unsigned char> current = finalImg.begin<unsigned char>();
     cv::MatIterator_<unsigned char> final = finalImg.end<unsigned char>();
@@ -360,61 +366,37 @@ Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thre
         if (*current == 64)
             *current = 255;
     }
-    return finalImg;
+    Mat output;
+    cvtColor(finalImg,output,COLOR_GRAY2BGR);
+    return output;
 
         //Canny(src, edges, lower, upper);
 }
 
 
+/*
+Mat convertToThree(Mat src) {
 
+    Mat output;
+    ;
+    for(int x = 0; x < src.cols; x++) {
+        for (int y = 0; y < src.rows; y++) {
+            printf("test\n");
+            Vec3b color = src.at<Vec3b>(Point(x, y));
+            printf("test1\n");
+            uchar channelCol = color[0];
+            printf("test2\n");
+            color[1] = channelCol;
+            printf("test3\n");
+            color[2] = channelCol;
 
-vector<Vec3f> houghTransform(Mat src, vector<Vec3f> circles) {
-    HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/30, 1, 180,0,0);
-    return circles;
-}
-
-
-
-double countMoney(vector<Vec3f> circles, Mat img) {
-    double counter = 0;
-    vector<double> radii;
-
-    for( int i = 0; i < circles.size(); i++ ) {
-        Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        double radius = circles[i][2];
-        printf("%d\t%d\t%f\n", center.x, center.y, radius);
-        radii.push_back(radius);
-        circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
-        circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
-    }
-    for(int j = 0; j < radii.size(); j++) {
-        if(radii[j] < 100) {
-            counter += .1;
-        } else if(radii[j] < 200) {
-            counter += .01;
-        } else if(radii[j] < 600) {
-            counter += .05;
-        } else if(radii[j] < 1000) {
-            counter += .25;
-        } else if(radii[j] < 600) {
-            counter += 1;
-        } else {
-            counter += .5;
+            output.at<Vec3b>(Point(x,y)) = color;
+            printf("test4\n");
         }
     }
+    return output;
+}*/
 
-    /// Show your results
-    namedWindow( "Hough Circle Transform Demo", CV_WINDOW_AUTOSIZE );
-    imshow( "Hough Circle Transform Demo", img );
-
-    waitKey(0);
-        /*
-        // draw the circle center
-
-        */
-
-    return counter;
-}
 string type2str(int type) {  //detects number of channels and data type- https://stackoverflow.com/questions/10167534
     string r;
 
@@ -438,6 +420,158 @@ string type2str(int type) {  //detects number of channels and data type- https:/
     return r;
 }
 
+bool checkHistory(int x, int y, int r, vector<int> vx, vector<int> vy, vector<int> vr, int threshold) {
+    /*printf("%d %d %d\n", x, y, r);
+    for(int a = 0; a < vx.size(); a++) {
+        printf("%d\n",vx[a]);
+    }*/
+    for(int i = 0; i < vx.size(); i++) {
+        for(int j = 0; j < vy.size(); j++) {
+            for(int k = 0; k < vr.size(); k++) {
+                //printf("%d %d %d\n", abs(x-vx[i]), abs(y-vy[j]), abs(r-vr[k]));
+                if(abs(x-vx[i]) < threshold && abs(y-vy[j]) < threshold && r-vr[k] < 30) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+
+}
+
+
+Mat houghTransform(Mat image, Mat src, int circleThreshold, int radiusSize, int distanceThreshold) { //200
+
+    Mat houghInput;
+    vector<int> vx;
+    vector<int> vy;
+    vector<int> vr;
+    cvtColor(src, houghInput, COLOR_BGR2GRAY);
+    Mat hough= image.clone();
+    vector<Vec3f> circles;
+    //zero
+
+
+
+    for(int radius = 35; radius < radiusSize; radius++) {
+        for (int i = 0; i < 5000; i++) {
+            for(int j = 0; j < 5000; j++) {
+                accumulator[i][j] = 0;
+            };
+        };
+        //printf("%d\n", radius);
+        for(int x = 1; x < src.cols-1; x++) {
+            for (int y = 1; y < src.rows - 1; y++) {
+                if(src.at<Vec3b>(Point(x,y))[0] == 255) {
+                    for(int theta = 0; theta <= 360; theta++) {
+                        int a = (int)(x - radius * cos(theta*(3.14159/180.0)));  //column
+                        int b = (int)(y - radius * sin(theta*(3.14159/180.0)));  //row
+
+
+                        if(b > 0 && b < src.rows && a > 0 && a < src.cols && src.at<Vec3b>(Point(a,b))[0] == 255){
+                            accumulator[x][y]++;
+                            //printf("%d\n", accumulator[a][b]);
+                            //printf("%d %d\n", a, b);
+                        }
+
+
+                    }
+
+                }
+            }
+        }
+
+        //printf("%d %d\n",src.cols, src.rows);
+        for(int innerx = 1; innerx < src.cols-1; innerx++) {
+            for (int innery = 1; innery < src.rows - 1; innery++) {
+                //printf("%d %d\n", innerx, innery);
+                /*if(innerx == 734 && innery == 628) {
+                    printf("%d\n", accumulator[innerx][innery]);
+                }*/
+
+
+                if(accumulator[innerx][innery] > circleThreshold && checkHistory(innerx, innery, radius, vx, vy, vr, distanceThreshold)) {
+                    //printf("point %d %d\n", innerx, innery);
+                    vx.push_back(innerx);
+                    vy.push_back(innery);
+                    vr.push_back(radius);
+                    hough.at<Vec3b>(Point(innerx,innery))[0] = 0;
+                    hough.at<Vec3b>(Point(innerx,innery))[1] = 0;
+                    hough.at<Vec3b>(Point(innerx,innery))[2] = 255;
+
+                    //printf("x %d y %d r %d\n", innerx, innery, radius);
+
+                    for(int theta = 0; theta <= 360; theta++) {
+                        int a = (int)(innerx - radius * cos(theta*(3.14159/180.0)));
+                        int b = (int)(innery - radius * sin(theta*(3.14159/180.0)));
+                        if(a > 0 && a < src.cols && b > 0 && b < src.rows){
+
+                            hough.at<Vec3b>(Point(a,b))[0] = 0;
+                            hough.at<Vec3b>(Point(a,b))[1] = 0;
+                            hough.at<Vec3b>(Point(a,b))[2] = 255;
+                            //printf("%d\n", accumulator[a][b]);
+                            //printf("%d %d\n", a, b);
+                        }
+
+                    }
+
+                }
+
+            }
+        }
+
+    }
+    HoughCircles( houghInput, circles, CV_HOUGH_GRADIENT, 1, src.rows/14, 30, 23, 20, 60 );  //get the remaining ones
+    for( int i = 0; i < circles.size(); i++ ) {
+        //printf("%d\n", i);
+        Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        int radiusHough = cvRound(circles[i][2]);
+        hough.at<Vec3b>(center)[0] = 0;
+        hough.at<Vec3b>(center)[1] = 0;
+        hough.at<Vec3b>(center)[2] = 255;
+        vr.push_back(radiusHough);
+
+        for(int theta = 0; theta <= 360; theta++) {
+            int a = (int)(center.x - radiusHough * cos(theta*(3.14159/180.0)));
+            int b = (int)(center.y - radiusHough * sin(theta*(3.14159/180.0)));
+            if(a > 0 && a < src.cols && b > 0 && b < src.rows){
+
+                hough.at<Vec3b>(Point(a,b))[0] = 0;
+                hough.at<Vec3b>(Point(a,b))[1] = 0;
+                hough.at<Vec3b>(Point(a,b))[2] = 255;
+                //printf("%d\n", accumulator[a][b]);
+                //printf("%d %d\n", a, b);
+            }
+
+        }
+    }
+    sort(vr.begin(),vr.end());
+    double total = 0;
+
+    for(int f = 0; f < vr.size(); f++) {
+        printf("%d\n", vr[f]);
+        if(vr[f] < .27) {
+            total += .1;
+        } else if(vr[f] < 33) {
+            total += .01;
+        } else if(vr[f] < 35) {
+            total += .05;
+        } else if(vr[f] < 38) {
+            total += .25;
+        } else if(vr[f] < 4) {
+            total += 1;
+        } else {
+            total += .5;
+        }
+    }
+    printf("Total: %.2f\n", total);
+    return hough;
+
+}
+
+
+
+
 int main(int argc, char** argv )
 {
     if ( argc != 2 ) //if command line arguments aren't correct
@@ -446,7 +580,7 @@ int main(int argc, char** argv )
         return -1;
     }
 
-    Mat gray, image, blur, sobel, angle, edges, black; //declare image matrix and destination for grayscale matrix and blur matr
+    Mat gray, image, blur, sobel, angle, edges, hough; //declare image matrix and destination for grayscale matrix and blur matr
     vector<Vec3f> circles;
     double money;
     image = imread( argv[1], 1 ); //read image into image matrix
@@ -456,19 +590,20 @@ int main(int argc, char** argv )
         return -1;
     }
 
+    //Size size(image.cols/4,image.rows/4);//the dst image size,e.g.100x100
+    Mat dst;//dst image
+    resize(image,dst,Size(), .2, .2);//resize image
+
 
     Mat output,output2;
 
     printf("Grayscale\n");
-    gray = grayscale(image); //convert image to grayscale and save into gray matrix
+    gray = grayscale(dst); //convert image to grayscale and save into gray matrix
 
     //string ty =  type2str( gray.type() );
     //printf("Matrix: %s %dx%d \n", ty.c_str(), gray.cols, gray.rows );
-    /*namedWindow("gray", CV_WINDOW_NORMAL);
-    imshow("gray", gray);
-    waitKey(2000);*/
     printf("Blur\n");
-    blur = gaussBlur(gray); //apply gaussian blur to grayscale matrix and save into blur matrix
+    blur = gaussBlur(gaussBlur(gaussBlur(gaussBlur(gaussBlur(gaussBlur(gaussBlur(gray)))))));
 
     printf("Sobel Magnitude\n");
     sobel = sobelOperator(blur);
@@ -476,28 +611,16 @@ int main(int argc, char** argv )
     printf("Sobel Angle\n");
     angle = sobelAngle(blur);
 
-
-
-    //Canny(blur, edges, 50, 250);
     printf("Canny\n");
-    edges = edgeDetect(sobel, angle, 100 , 20); //apply edge detection to blur matrix  bring upper higher   //50 30
+    edges = edgeDetect(sobel, angle, 225 , 225);
 
-    resize(edges, output2, Size(), .2,.2);
-    namedWindow("Canny", CV_WINDOW_NORMAL);
-    imshow("Canny", output2);
+    printf("Hough Transform\n");
+    hough = houghTransform(dst, edges, 110, 100, 50);
+
+    //resize(hough, output2, Size(), .5,.5);
+    namedWindow("Hough", CV_WINDOW_NORMAL);
+    imshow("Hough", hough);
     waitKey(0);
-    //Mat output;
-    //resize(blur, output, Size(), .2,.2);
-    //namedWindow("blur", CV_WINDOW_NORMAL);
-    //imshow("blur", blur);
-    //waitKey(0);
-    //printf("test\n");
-    //circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
-    //printf("test2\n");
-    //money = countMoney(circles, gray); //count the money from the circles
-    //printf("test3\n");
-    //printf("Total: %f\n", money);
-//2.33
 
 
     return 0;
