@@ -8,34 +8,21 @@ using namespace std;
 
 Mat grayscale(Mat src) {
 
+    Mat gray = src.clone();
 
-    Mat gray(src.rows, src.cols, CV_8U, Scalar(0,0,0));
+    for (int x = 0; x < src.cols; x++) {
+        for (int y = 0; y < src.rows; y++) {
+            Vec3b color = src.at<Vec3b>(Point(x, y));
+            uchar grayVal = (uchar) ((color[0] + color[1] + color[2]) / 3);
+            color[0] = grayVal;
+            color[1] = grayVal;
+            color[2] = grayVal;
+            gray.at<Vec3b>(Point(x, y)) = color;
 
-    
-    for(int row = 0; row < src.rows; row++) {
-        const uchar *ptr = src.ptr(row);
-        uchar *g = gray.ptr(row);
-        for (int col = 0; col < src.cols; col++) {
-
-            const uchar * uc_pixel = ptr;
-            uchar * g_pixel = g;
-            int a = uc_pixel[0];
-            int b = uc_pixel[1];
-            int c = uc_pixel[2];
-            uchar grayVal = (uchar)(a*.07 + b*.72 + c*.21);
-            g_pixel[0] = grayVal;
-            ptr += 3;
-            g += 1;
-
-            //printf("%d\n", g[col]);
         }
     }
 
-
-    //cvtColor(src, gray, CV_BGR2GRAY);
     return gray;
-
-
 }
 
 Mat gaussBlur(Mat src) {
@@ -44,8 +31,40 @@ Mat gaussBlur(Mat src) {
      *  .08 .64 .08
      *  .01 .08 .01
      */
-    Mat gauss(src.rows, src.cols, CV_8U, Scalar(0));
+    Mat gauss = src.clone();
 
+    double weights[3][3] = {
+            {.01,.08,.01},
+            {.08,.64,.08},
+            {.01,.08,.01}
+    };
+
+    for(int x = 1; x < src.cols-1; x++) {
+
+        for (int y = 1; y < src.rows-1; y++) {
+
+            int sum = 0;
+            for (int a = -1; a <= 1; a++) {
+
+                for (int b = -1; b <= 1; b++) {
+                    Vec3b pixel = src.at<Vec3b>(Point(x+a,y+b));
+                    uchar blurval = (uchar)(pixel[0] * weights[a+1][b+1]);
+                    sum += blurval;
+
+                }
+            }
+            Vec3b color = src.at<Vec3b>(Point(x,y));
+            if(sum > 255) {
+                sum = 255;
+            }
+            color[0] = uchar(sum);
+            color[1] = uchar(sum);
+            color[2] = uchar(sum);
+            gauss.at<Vec3b>(Point(x,y)) = color;
+        }
+    }
+
+    /*
     for(int row = 1; row < src.rows - 1; row++) {
         for (int col = 1; col < src.cols -1; col++) {
             uchar topleft = src.at<uchar>(row-1,col-1);
@@ -62,17 +81,104 @@ Mat gaussBlur(Mat src) {
 
             //printf("%d\n", g[col]);
         }
-    }
+    }*/
 
 
     //GaussianBlur(src, dst, ksize, sigmaX, sigmaY);
     return gauss;
 }
 
-Mat sobel(Mat src, int angle)
-{
+Mat sobelAngle(Mat src) {
+    Mat sobel = src.clone();
+
+    double horizonalWeights[3][3] = {
+            {1, 0, -1},
+            {2, 0, -2},
+            {1, 0, -1}
+    };
+    double verticalWeights[3][3] = {
+            {-1, -2, -1},
+            {0,  0,  0},
+            {1,  2,  1}
+    };
 
 
+    for (int x = 1; x < src.cols - 1; x++) {
+
+        for (int y = 1; y < src.rows - 1; y++) {
+
+            int horizontalSum = 0;
+            int verticalSum = 0;
+
+            for (int a = -1; a <= 1; a++) {
+
+                for (int b = -1; b <= 1; b++) {
+                    Vec3b pixel = src.at<Vec3b>(Point(x + a, y + b));
+                    horizontalSum += (pixel[0] * horizonalWeights[a + 1][b + 1]);
+                    verticalSum += (pixel[0] * verticalWeights[a + 1][b + 1]);
+
+                }
+            }
+            //double sum = sqrt(horizontalSum * horizontalSum + verticalSum * verticalSum);
+            double angle = cvFastArctan(verticalSum, horizontalSum);
+            Vec3b color = src.at<Vec3b>(Point(x, y));
+
+            color[0] = uchar(angle);
+            color[1] = uchar(angle);
+            color[2] = uchar(angle);
+            sobel.at<Vec3b>(Point(x, y)) = color;
+        }
+    }
+    return sobel;
+}
+
+Mat sobelOperator(Mat src) {
+    Mat sobel = src.clone();
+
+    double horizonalWeights[3][3] = {
+            {1,0,-1},
+            {2,0,-2},
+            {1,0,-1}
+    };
+    double verticalWeights[3][3] = {
+            {-1,-2,-1},
+            {0,0,0},
+            {1,2,1}
+    };
+
+
+
+    for(int x = 1; x < src.cols-1; x++) {
+
+        for (int y = 1; y < src.rows-1; y++) {
+
+            int horizontalSum = 0;
+            int verticalSum = 0;
+
+            for (int a = -1; a <= 1; a++) {
+
+                for (int b = -1; b <= 1; b++) {
+                    Vec3b pixel = src.at<Vec3b>(Point(x+a,y+b));
+                    horizontalSum += (pixel[0] * horizonalWeights[a+1][b+1]);
+                    verticalSum += (pixel[0] * verticalWeights[a+1][b+1]);
+
+                }
+            }
+            double sum = sqrt(horizontalSum*horizontalSum + verticalSum*verticalSum);
+            double angle = cvFastArctan(verticalSum, horizontalSum);
+            Vec3b color = src.at<Vec3b>(Point(x,y));
+            if(sum > 255) {
+                sum = 255;
+            }
+            color[0] = uchar(sum);
+            color[1] = uchar(sum);
+            color[2] = uchar(sum);
+            sobel.at<Vec3b>(Point(x,y)) = color;
+        }
+    }
+    return sobel;
+
+    /*
     Mat sobel(src.rows, src.cols, CV_8U, Scalar(0));
 
     if(angle == 0) {
@@ -122,12 +228,15 @@ Mat sobel(Mat src, int angle)
 
 
     sobel.convertTo(sobel, CV_32F); //1.0/255.0
-    return sobel;
+     */
+
 }
 
-Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are for derivative calcs
+
+Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thresholds are for derivative calcs
 {
 
+    /*
     //sobel(src, magX, 0);
     //sobel(src, sobelY, 1);
 
@@ -140,12 +249,12 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
 
 
     //calculate sobel into magx and sobelY
-    /*
+
     Mat sobelX = Mat(src.rows, src.cols, 1, CV_32F);  //horizontal
     Mat sobelY = Mat(src.rows, src.cols, 0, CV_32F);  //vertical
     cv::Sobel(src, sobelX, CV_32F, 1, 0, (int)size);
     cv::Sobel(src, sobelY, CV_32F, 0, 1, (int)size);
-    */
+
 
 
     //calculate slope at all points- divide y derivative by x derivative
@@ -167,7 +276,9 @@ Mat edgeDetect(Mat src, int upper, int lower, double size = 3) //thresholds are 
     resize(sum, output, Size(), .2,.2);
     namedWindow("mysobel", CV_WINDOW_NORMAL);
     imshow("mysobel", output);
-    waitKey(7000);
+    waitKey(7000);*/
+
+    Mat sum = src;
 
 
 
@@ -455,7 +566,7 @@ int main(int argc, char** argv )
         return -1;
     }
 
-    Mat gray, image, blur, edges, black; //declare image matrix and destination for grayscale matrix and blur matr
+    Mat gray, image, blur, sobel, angle, edges, black; //declare image matrix and destination for grayscale matrix and blur matr
     vector<Vec3f> circles;
     double money;
     image = imread( argv[1], 1 ); //read image into image matrix
@@ -466,20 +577,40 @@ int main(int argc, char** argv )
     }
 
 
+    Mat output,output2;
 
-
+    printf("Grayscale\n");
     gray = grayscale(image); //convert image to grayscale and save into gray matrix
-    string ty =  type2str( gray.type() );
-    printf("Matrix: %s %dx%d \n", ty.c_str(), gray.cols, gray.rows );
-    blur = gaussBlur(gaussBlur(gaussBlur(gaussBlur(gray)))); //apply gaussian blur to grayscale matrix and save into blur matrix
-    //Canny(blur, edges, 50, 250);
 
-    edges = edgeDetect(blur, 100 , 20); //apply edge detection to blur matrix  bring upper higher   //50 30
-    Mat output;
-    resize(edges, output, Size(), .2,.2);
-    namedWindow("edges", CV_WINDOW_NORMAL);
-    imshow("edges", output);
+    //string ty =  type2str( gray.type() );
+    //printf("Matrix: %s %dx%d \n", ty.c_str(), gray.cols, gray.rows );
+    /*namedWindow("gray", CV_WINDOW_NORMAL);
+    imshow("gray", gray);
+    waitKey(2000);*/
+    printf("Blur\n");
+    blur = gaussBlur(gray); //apply gaussian blur to grayscale matrix and save into blur matrix
+
+    printf("Sobel Magnitude\n");
+    sobel = sobelOperator(blur);
+
+    printf("Sobel Angle\n");
+    angle = sobelAngle(blur);
+
+
+
+    //Canny(blur, edges, 50, 250);
+    printf("Canny\n");
+    edges = edgeDetect(sobel, angle, 100 , 20); //apply edge detection to blur matrix  bring upper higher   //50 30
+
+    resize(edges, output2, Size(), .2,.2);
+    namedWindow("Canny", CV_WINDOW_NORMAL);
+    imshow("Canny", output2);
     waitKey(0);
+    //Mat output;
+    //resize(blur, output, Size(), .2,.2);
+    //namedWindow("blur", CV_WINDOW_NORMAL);
+    //imshow("blur", blur);
+    //waitKey(0);
     //printf("test\n");
     //circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
     //printf("test2\n");
