@@ -63,28 +63,6 @@ Mat gaussBlur(Mat src) {
             gauss.at<Vec3b>(Point(x,y)) = color;
         }
     }
-
-    /*
-    for(int row = 1; row < src.rows - 1; row++) {
-        for (int col = 1; col < src.cols -1; col++) {
-            uchar topleft = src.at<uchar>(row-1,col-1);
-            uchar topcenter = src.at<uchar>(row-1,col);
-            uchar topright = src.at<uchar>(row-1,col+1);
-            uchar middleleft = src.at<uchar>(row,col-1);
-            uchar middlecenter = src.at<uchar>(row,col);
-            uchar middleright = src.at<uchar>(row,col+1);
-            uchar bottomleft = src.at<uchar>(row+1,col-1);
-            uchar bottomcenter = src.at<uchar>(row+1,col);
-            uchar bottomright = src.at<uchar>(row+1,col+1);
-            uchar gaussval = (uchar)(topleft*.01+topcenter*.08+topright*.01+middleleft*.08+middlecenter*.64+middleright*.08+bottomleft*.01+bottomcenter*.08+bottomright*.01);
-            gauss.at<uchar>(row, col) = gaussval;
-
-            //printf("%d\n", g[col]);
-        }
-    }*/
-
-
-    //GaussianBlur(src, dst, ksize, sigmaX, sigmaY);
     return gauss;
 }
 
@@ -107,8 +85,8 @@ Mat sobelAngle(Mat src) {
 
         for (int y = 1; y < src.rows - 1; y++) {
 
-            int horizontalSum = 0;
-            int verticalSum = 0;
+            double horizontalSum = 0;
+            double verticalSum = 0;
 
             for (int a = -1; a <= 1; a++) {
 
@@ -120,12 +98,12 @@ Mat sobelAngle(Mat src) {
                 }
             }
             //double sum = sqrt(horizontalSum * horizontalSum + verticalSum * verticalSum);
-            double angle = cvFastArctan(verticalSum, horizontalSum);
+            double proportion = verticalSum/horizontalSum;
             Vec3b color = src.at<Vec3b>(Point(x, y));
 
-            color[0] = uchar(angle);
-            color[1] = uchar(angle);
-            color[2] = uchar(angle);
+            color[0] = uchar(proportion);
+            color[1] = uchar(proportion);
+            color[2] = uchar(proportion);
             sobel.at<Vec3b>(Point(x, y)) = color;
         }
     }
@@ -145,8 +123,6 @@ Mat sobelOperator(Mat src) {
             {0,0,0},
             {1,2,1}
     };
-
-
 
     for(int x = 1; x < src.cols-1; x++) {
 
@@ -178,109 +154,13 @@ Mat sobelOperator(Mat src) {
     }
     return sobel;
 
-    /*
-    Mat sobel(src.rows, src.cols, CV_8U, Scalar(0));
-
-    if(angle == 0) {
-        for (int row = 1; row < src.rows - 1; row++) {
-            for (int col = 1; col < src.cols - 1; col+=1) {
-                uchar topleft = src.at<uchar>(row - 1, col - 1);
-                uchar topcenter = src.at<uchar>(row - 1, col);
-                uchar topright = src.at<uchar>(row - 1, col + 1);
-                uchar middleleft = src.at<uchar>(row, col - 1);
-                uchar middlecenter = src.at<uchar>(row, col);
-                uchar middleright = src.at<uchar>(row, col + 1);
-                uchar bottomleft = src.at<uchar>(row + 1, col - 1);
-                uchar bottomcenter = src.at<uchar>(row + 1, col);
-                uchar bottomright = src.at<uchar>(row + 1, col + 1);
-                uchar sobelval = (uchar) (topleft * -1 + topcenter * 0 + topright * 1 + middleleft * -2 +
-                                          middlecenter * 0 + middleright * 2 + bottomleft * -1 +
-                                          bottomcenter * 0 + bottomright * 1);
-                sobel.at<uchar>(row, col) = sobelval;
-
-                //printf("%d\n", g[col]);
-            }
-        }
-    } else {
-
-        for (int row = 1; row < src.rows - 1; row++) {
-            for (int col = 1; col < src.cols - 1; col+=1) {
-                uchar topleft = src.at<uchar>(row - 1, col - 1);
-                uchar topcenter = src.at<uchar>(row - 1, col);
-                uchar topright = src.at<uchar>(row - 1, col + 1);
-                uchar middleleft = src.at<uchar>(row, col - 1);
-                uchar middlecenter = src.at<uchar>(row, col);
-                uchar middleright = src.at<uchar>(row, col + 1);
-                uchar bottomleft = src.at<uchar>(row + 1, col - 1);
-                uchar bottomcenter = src.at<uchar>(row + 1, col);
-                uchar bottomright = src.at<uchar>(row + 1, col + 1);
-                uchar sobelval = (uchar) (topleft * -1 + topcenter * -2 + topright * -1 + middleleft * 0 +
-                                          middlecenter * 0 + middleright * 0 + bottomleft * 1 +
-                                          bottomcenter * 2 + bottomright * 1);
-                sobel.at<uchar>(row, col) = sobelval;
-
-                //printf("%d\n", g[col]);
-            }
-        }
-
-    }
-
-
-
-    sobel.convertTo(sobel, CV_32F); //1.0/255.0
-     */
-
 }
 
 
 Mat edgeDetect(Mat src, Mat angle, int upper, int lower, double size = 3) //thresholds are for derivative calcs
 {
 
-    /*
-    //sobel(src, magX, 0);
-    //sobel(src, sobelY, 1);
-
-    //sobel holder
-    Mat sobelX = Mat(src.rows, src.cols, 1, CV_32F); //sobel(src, 1); //horizontal //Mat sobelX = sobel(src, 1);
-    Mat sobelY = Mat(src.rows, src.cols, 0, CV_32F);//sobel(src, 0);//Mat(src.rows, src.cols, 0, CV_32F); //sobel(src, 0); //vertical
-    Sobel(src, sobelX, CV_32F, 1, 0, (int)size);
-    Sobel(src, sobelY, CV_32F, 0, 1, (int)size);
-
-
-
-    //calculate sobel into magx and sobelY
-
-    Mat sobelX = Mat(src.rows, src.cols, 1, CV_32F);  //horizontal
-    Mat sobelY = Mat(src.rows, src.cols, 0, CV_32F);  //vertical
-    cv::Sobel(src, sobelX, CV_32F, 1, 0, (int)size);
-    cv::Sobel(src, sobelY, CV_32F, 0, 1, (int)size);
-
-
-
-    //calculate slope at all points- divide y derivative by x derivative
-    Mat angle = Mat(src.rows, src.cols, CV_32F);
-    cv::divide(sobelY, sobelX, angle);
-
-    //magnitude of gradient at each pixel: sqrt((Gx)^2 + (Gy)^2)
-    //create destination mats
-    Mat sum = Mat(src.rows, src.cols, CV_64F);
-    Mat dstX = Mat(src.rows, src.cols, CV_64F);
-    Mat dstY = Mat(src.rows, src.cols, CV_64F);
-    cv::multiply(sobelX, sobelX, dstX); //x derivative squared into dstX
-    cv::multiply(sobelY, sobelY, dstY); //y derivative squared into dstY
-    sum = dstX + dstY; //x^2 + x^2
-    //sum.convertTo(sum, CV_64F, 1.0 / 255.0);
-    //sum.convertTo(sum, CV_64F, 1.0 / 255.0);
-    cv::sqrt(sum, sum); //sqrt all elements in sum   //DOES NOT WORK WITH 8U-convert to float
-    Mat output;
-    resize(sum, output, Size(), .2,.2);
-    namedWindow("mysobel", CV_WINDOW_NORMAL);
-    imshow("mysobel", output);
-    waitKey(7000);*/
-
     Mat sum = src;
-
-
 
     Mat finalImg = Mat(src.rows, src.cols, CV_8U); //instantiate image to output
 
