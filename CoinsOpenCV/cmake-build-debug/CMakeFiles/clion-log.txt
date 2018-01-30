@@ -1,0 +1,5 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" "/Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV"
+-- Found OpenCV: /usr/local (found version "3.4.0") 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV/cmake-build-debug
