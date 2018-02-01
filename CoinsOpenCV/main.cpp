@@ -7,12 +7,6 @@ using namespace cv;
 using namespace std;
 
 
-Mat edgeDetect(Mat src, Mat edges, int lowerThreshold, int upperThreshold) //thresholds are for derivative calcs
-{
-    //Sobel(src, src, CV_32F, 1, 0);
-    Canny(src, edges, lowerThreshold, upperThreshold);
-    return edges;
-}
 
 Mat gaussBlur(Mat src, Mat dst, Size ksize, double sigmaX, double sigmaY) {
     GaussianBlur(src, dst, ksize, sigmaX, sigmaY);
@@ -59,7 +53,7 @@ double countMoney(vector<Vec3f> circles, Mat img) {
         } else if(radius < dollarVal) {
             counter += 1;
         } else if(radius < halfVal) {
-            counter += .5;
+            radius += .5;
         }
 
     }
@@ -79,7 +73,7 @@ int main(int argc, char** argv )
         return -1;
     }
 
-    Mat image, gray, blur, edges, black; //declare image matrix and destination for grayscale matrix and blur matrix
+    Mat image, dst; //declare image matrix and destination for grayscale matrix and blur matrix
 
     vector<Vec3f> circles;
     double money;
@@ -91,15 +85,15 @@ int main(int argc, char** argv )
     }
 
 
-    gray = grayscale(image, gray); //convert image to grayscale and save into gray matrix
-    blur = gaussBlur(gray, blur, Size(3,3), 0, 0); //apply gaussian blur to grayscale matrix and save into blur matrix
-    edges = edgeDetect(blur, edges, 100, 200); //apply edge detection to blur matrix
-    //namedWindow("edges", CV_WINDOW_NORMAL);
-    //imshow("edges", edges);
-    //waitKey(0);
-
-    circles = houghTransform(edges, circles); //apply hough transform to edge matrix and return list of circles
-    money = countMoney(circles, gray); //count the money from the circles
+    dst = grayscale(image, dst); //convert image to grayscale and save into gray matrix
+    for(int i = 0; i < 4; i++) {
+        dst = gaussBlur(dst, dst, Size(3,3), 0, 0); //apply gaussian blur to grayscale matrix and save into blur matrix
+    }
+    HoughCircles(dst, circles, CV_HOUGH_GRADIENT, 1, image.rows/12, 100, 120, 0, 0 );
+    money = countMoney(circles, image); //count the money from the circles
+    namedWindow("Circles", CV_WINDOW_NORMAL);
+    imshow("Circles", image);
+    waitKey(0);
     printf("Total: %f\n", money);
 
 
