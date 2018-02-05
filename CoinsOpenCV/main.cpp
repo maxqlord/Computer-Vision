@@ -9,11 +9,11 @@ using namespace std;
 double countMoney(vector<Vec3f> circles, Mat img) {
     double counter = 0;
     vector<double> radii;
-    double dimeVal = 100;
-    double pennyVal = 120;
-    double nickelVal = 140;
-    double quarterVal = 180;
-    double dollarVal = 200;
+    double dimeVal = 120;
+    double pennyVal = 140;
+    double nickelVal = 150;
+    double quarterVal = 165;
+    double dollarVal = 190;
     double halfVal = 300;
 
     for( int i = 0; i < circles.size(); i++ ) {
@@ -36,7 +36,7 @@ double countMoney(vector<Vec3f> circles, Mat img) {
         } else if(radius < dollarVal) {
             counter += 1;
         } else if(radius < halfVal) {
-            radius += .5;
+            counter += .5;
         }
 
     }
@@ -69,10 +69,10 @@ int main(int argc, char** argv )
 
 
     cvtColor(image, dst, CV_BGR2GRAY); //convert image to grayscale and save into gray matrix
-    for(int i = 0; i < 4; i++) {
-        GaussianBlur(dst, dst, Size(3,3), 0, 0); //apply gaussian blur to grayscale matrix and save into blur matrix
+    for(int i = 0; i < 1; i++) {
+        GaussianBlur(dst, dst, Size(7,7), 7, 7); //apply gaussian blur to grayscale matrix and save into blur matrix
     }
-    HoughCircles(dst, circles, CV_HOUGH_GRADIENT, 1, image.rows/12, 100, 120, 0, 0 );
+    HoughCircles(dst, circles, CV_HOUGH_GRADIENT, 1, 80, 30, 93, 100, 300);
     money = countMoney(circles, image); //count the money from the circles
     namedWindow("Circles", CV_WINDOW_NORMAL);
     imshow("Circles", image);
