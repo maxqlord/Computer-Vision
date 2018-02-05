@@ -6,23 +6,6 @@
 using namespace cv;
 using namespace std;
 
-
-
-Mat gaussBlur(Mat src, Mat dst, Size ksize, double sigmaX, double sigmaY) {
-    GaussianBlur(src, dst, ksize, sigmaX, sigmaY);
-    return dst;
-}
-
-Mat grayscale(Mat src, Mat gray) {
-    cvtColor(src, gray, CV_BGR2GRAY);
-    return gray;
-}
-
-vector<Vec3f> houghTransform(Mat src, vector<Vec3f> circles) {
-    HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/8 );
-    return circles;
-}
-
 double countMoney(vector<Vec3f> circles, Mat img) {
     double counter = 0;
     vector<double> radii;
@@ -85,9 +68,9 @@ int main(int argc, char** argv )
     }
 
 
-    dst = grayscale(image, dst); //convert image to grayscale and save into gray matrix
+    cvtColor(image, dst, CV_BGR2GRAY); //convert image to grayscale and save into gray matrix
     for(int i = 0; i < 4; i++) {
-        dst = gaussBlur(dst, dst, Size(3,3), 0, 0); //apply gaussian blur to grayscale matrix and save into blur matrix
+        GaussianBlur(dst, dst, Size(3,3), 0, 0); //apply gaussian blur to grayscale matrix and save into blur matrix
     }
     HoughCircles(dst, circles, CV_HOUGH_GRADIENT, 1, image.rows/12, 100, 120, 0, 0 );
     money = countMoney(circles, image); //count the money from the circles
