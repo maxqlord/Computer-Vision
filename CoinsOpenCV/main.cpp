@@ -9,12 +9,21 @@ using namespace std;
 double countMoney(vector<Vec3f> circles, Mat img) {
     double counter = 0;
     vector<double> radii;
-    double dimeVal = 120;
-    double pennyVal = 140;
-    double nickelVal = 150;
-    double quarterVal = 165;
-    double dollarVal = 190;
-    double halfVal = 300;
+    double minR = 100000;
+    double r;
+    for( int j = 0; j < circles.size(); j++) {
+        r = circles[j][2];
+        if(r < minR) {
+            minR = r;
+        }
+    }
+    
+    double dimeVal = minR;
+    double pennyVal = 1.16*dimeVal;
+    double nickelVal = 1.25*dimeVal;
+    double quarterVal = 1.375*dimeVal;
+    double dollarVal = 1.583*dimeVal;
+    double halfVal = 2.5*dimeVal;
 
     for( int i = 0; i < circles.size(); i++ ) {
         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
@@ -56,7 +65,7 @@ int main(int argc, char** argv )
         return -1;
     }
 
-    Mat image, dst; //declare image matrix and destination for grayscale matrix and blur matrix
+    Mat image, dst, gray; //declare image matrix and destination for grayscale matrix and blur matrix
 
     vector<Vec3f> circles;
     double money;
@@ -68,14 +77,16 @@ int main(int argc, char** argv )
     }
 
 
-    cvtColor(image, dst, CV_BGR2GRAY); //convert image to grayscale and save into gray matrix
+    cvtColor(image, gray, CV_BGR2GRAY); //convert image to grayscale and save into gray matrix
+        
     for(int i = 0; i < 1; i++) {
-        GaussianBlur(dst, dst, Size(7,7), 7, 7); //apply gaussian blur to grayscale matrix and save into blur matrix
+        GaussianBlur(gray, dst, Size(7,7), 7, 7); //apply gaussian blur to grayscale matrix and save into blur matrix
     }
+    cvtColor(gray,gray,COLOR_GRAY2BGR);
     HoughCircles(dst, circles, CV_HOUGH_GRADIENT, 1, 80, 30, 93, 100, 300);
-    money = countMoney(circles, image); //count the money from the circles
+    money = countMoney(circles, gray); //count the money from the circles
     namedWindow("Circles", CV_WINDOW_NORMAL);
-    imshow("Circles", image);
+    imshow("Circles", gray);
     waitKey(0);
     printf("Total: %f\n", money);
 
