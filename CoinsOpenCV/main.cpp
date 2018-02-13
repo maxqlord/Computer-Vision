@@ -19,7 +19,7 @@ double countMoney(vector<Vec3f> circles, Mat img) {
     for( int i = 0; i < circles.size(); i++ ) {
         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         double radius = circles[i][2];
-        printf("%d\t%d\t%f\n", center.x, center.y, radius);
+        //printf("%d\t%d\t%f\n", center.x, center.y, radius);
         radii.push_back(radius);
         circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
         // draw the circle outline
