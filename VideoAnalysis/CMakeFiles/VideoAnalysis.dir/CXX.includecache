@@ -7,14 +7,36 @@
 #IncludeRegexTransform: 
 
 /Users/maxlord/Google Drive/Computer Vision/VideoAnalysis/main.cpp
-opencv2/opencv.hpp
-/Users/maxlord/Google Drive/Computer Vision/VideoAnalysis/opencv2/opencv.hpp
+cv.h
+-
+highgui.h
+-
 iostream
 -
+opencv2/opencv.hpp
+-
+
+/usr/local/include/opencv/cv.h
+opencv2/core/core_c.h
+/usr/local/include/opencv/opencv2/core/core_c.h
+opencv2/imgproc/imgproc_c.h
+/usr/local/include/opencv/opencv2/imgproc/imgproc_c.h
+opencv2/photo/photo_c.h
+/usr/local/include/opencv/opencv2/photo/photo_c.h
+opencv2/video/tracking_c.h
+/usr/local/include/opencv/opencv2/video/tracking_c.h
+opencv2/objdetect/objdetect_c.h
+/usr/local/include/opencv/opencv2/objdetect/objdetect_c.h
 
 /usr/local/include/opencv/cxcore.h
 opencv2/core/core_c.h
 /usr/local/include/opencv/opencv2/core/core_c.h
+
+/usr/local/include/opencv/highgui.h
+opencv2/core/core_c.h
+/usr/local/include/opencv/opencv2/core/core_c.h
+opencv2/highgui/highgui_c.h
+/usr/local/include/opencv/opencv2/highgui/highgui_c.h
 
 /usr/local/include/opencv2/calib3d.hpp
 opencv2/core.hpp
