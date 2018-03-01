@@ -50,19 +50,36 @@ int main(){
             //printf("found\n");
             cornerSubPix(frameGray, corners, Size(11, 11), Size(-1, -1),
                          TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-        } /*else {
-            printf("not found\n");
-        }*/
+            circle(frame,Point((int)corners[24].x,(int)corners[24].y), 20, Scalar(0, 0, 255));
+        } else {
+            //printf("not found\n");
+            circle(frame,Point((int)corners[26].x,(int)corners[26].y), 20, Scalar(0, 0, 255));
+        }
 
 
         drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 
+        /*
+         * on an 3x3 image
+         *
+         * 1    2   3
+         * 4    5   6
+         * 7    8   9
+         *
+         * The corners are read: 987654321
+         */
+        /*circle(frame,Point(1247,447), 10, Scalar(0, 0, 255));
+        circle(frame,Point(1196,472), 10, Scalar(0, 0, 255));
+        circle(frame,Point(1188,425), 10, Scalar(0, 0, 255));*/
+
+        //circle(frame,Point((int)corners[24].x,(int)corners[24].y), 20, Scalar(0, 0, 255));
+
         // Display the resulting frame
         imshow( "Frame", frame );
-        print_vec(corners);
+        //print_vec(corners);
 
         // Press  ESC on keyboard to exit
-        waitKey(5000);
+        waitKey(200);
 
 
     }
