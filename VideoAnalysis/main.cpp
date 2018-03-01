@@ -10,6 +10,10 @@ void print_vec(vector<Point2f> corners) {
     }
 }
 
+float distance_formula(float x1, float y1, float x2, float y2) {
+    return sqrtf((float)std::pow(x2-x1, 2) + (float)std::pow(y2-y1, 2));
+}
+
 int main(){
 
     // Create a VideoCapture object and open the input file
@@ -43,7 +47,7 @@ int main(){
 
 
         bool patternfound = findChessboardCorners(frameGray, patternsize, corners,
-                                                  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE);
+                                                  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK);
 
 
         if(patternfound) {
@@ -53,11 +57,31 @@ int main(){
             circle(frame,Point((int)corners[24].x,(int)corners[24].y), 20, Scalar(0, 0, 255));
         } else {
             //printf("not found\n");
-            circle(frame,Point((int)corners[26].x,(int)corners[26].y), 20, Scalar(0, 0, 255));
+            //find average of all points and select point as center which is closest to the average of them
+            int center;
+            float x_total = 0;
+            float y_total = 0;
+            for(int i = 0; i < corners.size(); i++) {
+                x_total += corners[i].x;
+                y_total += corners[i].y;
+            }
+            float avg_x = x_total/corners.size();
+            float avg_y = y_total/corners.size();
+
+            float closest_index = 0;
+            float min_distance = 1000000000;
+            for(int i = 0; i < corners.size(); i++) {
+                float distance = distance_formula(corners[i].x, corners[i].y, avg_x, avg_y);
+                if(distance < min_distance) {
+                    min_distance = distance;
+                    closest_index = i;
+                }
+            }
+            circle(frame,Point((int)corners[closest_index].x,(int)corners[closest_index].y), 20, Scalar(0, 0, 255));
         }
 
 
-        drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
+        //drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 
         /*
          * on an 3x3 image
@@ -79,7 +103,7 @@ int main(){
         //print_vec(corners);
 
         // Press  ESC on keyboard to exit
-        waitKey(200);
+        waitKey(100);
 
 
     }
