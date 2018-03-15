@@ -96,10 +96,10 @@
 		<Unit filename="/Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV/../../../../../usr/local/share/OpenCV/OpenCVConfig.cmake">
 			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\local\share\OpenCV\"/>
 		</Unit>
-		<Unit filename="/Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV/../../../../../usr/local/share/OpenCV/OpenCVModules-release.cmake">
+		<Unit filename="/Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV/../../../../../usr/local/share/OpenCV/OpenCVModules.cmake">
 			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\local\share\OpenCV\"/>
 		</Unit>
-		<Unit filename="/Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV/../../../../../usr/local/share/OpenCV/OpenCVModules.cmake">
+		<Unit filename="/Users/maxlord/Google Drive/Computer Vision/CoinsOpenCV/../../../../../usr/local/share/OpenCV/OpenCVModules-release.cmake">
 			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\local\share\OpenCV\"/>
 		</Unit>
 	</Project>

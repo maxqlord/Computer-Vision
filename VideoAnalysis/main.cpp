@@ -32,19 +32,20 @@ float distance_formula(float x1, float y1, float x2, float y2) {
     return sqrtf((float)std::pow(x2-x1, 2) + (float)std::pow(y2-y1, 2));
 }
 
-vector<Point> corners_of_center(const Point &center, vector<Point2f> corners) {
+vector<CornerPoint> corners_of_center(const Point &center, vector<Point2f> corners) {
 
     float min_distance = 1000000000;
     vector<CornerPoint> closestPoints;
+    vector<Point2f> squareCorners;
 
     for(int i = 0; i < corners.size(); i++) {
         float distance = distance_formula(corners[i].x, corners[i].y, center.x, center.y);
         printf("%d\t%f\n", i, distance);
-        if(closestPoints.size() < 9) {
+        if(closestPoints.size() < 2) {
             closestPoints.push_back(CornerPoint(i, corners[i].x, corners[i].y, distance));
         } else {
-            if(distance < closestPoints[8].distance) {
-                closestPoints.erase(closestPoints.begin()+8, closestPoints.end());
+            if(distance < closestPoints[1].distance) {
+                closestPoints.erase(closestPoints.begin()+2, closestPoints.end());
                 closestPoints.push_back(CornerPoint(i, corners[i].x, corners[i].y, distance));
             }
         }
@@ -55,19 +56,38 @@ vector<Point> corners_of_center(const Point &center, vector<Point2f> corners) {
         printf("%d\t%f\n", j, closestPoints[j].distance);
     }
 
+    for(int k = 0; k < 2; k++) {
+        printf("Side: %f\n", closestPoints[k].distance);
+        squareCorners.push_back(Point((int)closestPoints[k].x, (int)closestPoints[k].y));
+    }
+
     printf("FINISHED\n\n\n");
 
+    /*
+     * 0 1
+     * 2 3
+     */
+    return closestPoints;
 
 
     //closestPoints now holds 9 closest points to center (including center)
 }
 
-int main(){
+int main(int argc, char** argv){
 
     // Create a VideoCapture object and open the input file
     // If the input is the web camera, pass 0 instead of the video file name
     //VideoCapture cap("StructureFromMotionVideo.mp4");
-    VideoCapture cap("withChessBoard.MOV");
+
+    if ( argc != 2 ) //if command line arguments aren't correct
+    {
+        printf("usage: ./VideoAnalysis <Video_Path>\n");
+        return -1;
+    }
+
+
+
+    VideoCapture cap(argv[1]); //withChessBoard.MOV
 
     // Check if camera opened successfully
     if(!cap.isOpened()){
@@ -130,10 +150,37 @@ int main(){
                     closest_index = i;
                 }
             }
-            circle(frame,Point((int)corners[closest_index].x,(int)corners[closest_index].y), 20, Scalar(0, 0, 255));
+            circle(frame,Point((int)corners[closest_index].x,(int)corners[closest_index].y), 20, Scalar(0, 0, 255)); //red
+            circle(frame,Point((int)corners[closest_index-1].x,(int)corners[closest_index-1].y), 20, Scalar(255, 0, 0)); //green
+
+            float x_distance = corners[closest_index].x - corners[closest_index-1].x;
+            float y_distance = corners[closest_index].y - corners[closest_index-1].y;
+            Point corner1 = Point((int)corners[closest_index].x,(int)corners[closest_index].y);
+            Point corner2 = Point((int)corners[closest_index-1].x,(int)corners[closest_index-1].y);
+            float distance = sqrtf(x_distance*x_distance + y_distance*y_distance);
+
+            printf("Center X,Y %f\t%f\tClosest X,Y %f\t%f\t X_d,Y_d,T_d %f\t%f\t%f\n", corners[closest_index].x, corners[closest_index].y, corners[closest_index-1].x, corners[closest_index-1].y, x_distance, y_distance, distance);
 
 
+            /*vector<CornerPoint> squareCorners= corners_of_center(Point((int)corners[closest_index].x,(int)corners[closest_index].y), corners);
+
+            circle(frame,Point((int)squareCorners[1].x,(int)squareCorners[1].y), 20, Scalar(0, 0, 255)); //red
+            circle(frame,Point((int)squareCorners[2].x,(int)squareCorners[2].y), 20, Scalar(0, 255, 0)); //green
+            */
+
+
+
+            /*
+            line(frame, Point((int)squareCorners[0].x, (int)squareCorners[0].y),  Point((int)squareCorners[1].x, (int)squareCorners[1].y), Scalar(255,0,0), 10);
+            line(frame, Point((int)squareCorners[0].x, (int)squareCorners[0].y),  Point((int)squareCorners[2].x, (int)squareCorners[2].y), Scalar(255,0,0), 10);
+            line(frame, Point((int)squareCorners[1].x, (int)squareCorners[1].y),  Point((int)squareCorners[3].x, (int)squareCorners[3].y), Scalar(255,0,0), 10);
+            line(frame, Point((int)squareCorners[2].x, (int)squareCorners[2].y),  Point((int)squareCorners[3].x, (int)squareCorners[3].y), Scalar(255,0,0), 10);
+            */
         }
+        /*
+         * 0 1
+         * 2 3
+         */
 
 
         drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
@@ -143,7 +190,7 @@ int main(){
         //print_vec(corners);
 
         // Press  ESC on keyboard to exit
-        waitKey(1000);
+        waitKey(100);
 
 
     }
