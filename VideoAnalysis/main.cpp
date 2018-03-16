@@ -113,25 +113,97 @@ int main(int argc, char** argv){
 
         // If the frame is empty, break immediately
 
-
+        //lower threshold?
         bool patternfound = findChessboardCorners(frameGray, patternsize, corners,
                                                   CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK);
+
+        Mat mat = (Mat_<double>(3, 3) << 1.2195112968898779e+003, 0., 3.6448211117862780e+002, 0., 0,1.2414409169216196e+003, 2.4321803868732076e+002, 0., 0.,1.);
+
+
+        Mat dist_coeffs = Mat::zeros(4,1,DataType<double>::type); // Assuming no lens distortion
+
+        vector<Point2f>corners1;// for chessboard pattern
+        Mat rotation_vector; // Rotation in axis-angle form
+        Mat translation_vector;
+
+        vector<Point3f>  objectPoints;
+
+        const string x= "X";
+        const string y= "Y";
+        const string z= "Z";
+        bool found=false;
+        vector<Point3d> point3D;
+        vector<Point2d> point2D;
+
+        int ChessboardPatternWidth=7;
+        int ChessboardPatternHight=7;
+        Size patternSize(ChessboardPatternWidth,ChessboardPatternHight);
+        float BoardBoxSize=4;
+
+        for (int j=0; j<patternSize.height;j++)
+        {
+            for( int i=0; i < patternSize.width;i++)
+            {
+                objectPoints.push_back(Point3f(i*BoardBoxSize,j*BoardBoxSize,0));
+            }
+        }
+
+
+        point3D.push_back(Point3d(0,0,-10.0));
+        point3D.push_back(Point3d(10.0,0,0));
+        point3D.push_back(Point3d(0,10.0,0));
+
+
+        point3D.push_back(Point3d(12, 0,-12.0));
+        point3D.push_back(Point3d(12, 8,-12.0));
+        point3D.push_back(Point3d(20, 8,-12.0));
+        point3D.push_back(Point3d(20, 0,-12.0));
+
+
+
 
 
         if(patternfound) {
             //printf("found\n");
             cornerSubPix(frameGray, corners, Size(11, 11), Size(-1, -1),
                          TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+            solvePnP(objectPoints, corners1, camera_matrix, dist_coeffs, rotation_vector, translation_vector);
+
+            projectPoints(point3D, rotation_vector, translation_vector, camera_matrix, dist_coeffs, point2D);
+
+
+            line(frame,corners1[3],  point2D[3], Scalar(0,0,255),6);
+            line(frame,corners1[21], point2D[4],Scalar(0,0,255), 6);
+            line(frame,corners1[23], point2D[5],Scalar(0,0,255), 6);
+            line(frame,corners1[5],  point2D[6], Scalar(0,0,255),6);
+
+            line(frame,corners1[3],corners1[5], Scalar(0,255,0),  6);
+            line(frame,corners1[5],corners1[23],Scalar(0,255,0) ,6);
+            line(frame,corners1[23],corners1[21],Scalar(0,255,0),  6);
+            line(frame,corners1[21],corners1[3],Scalar(0,255,0),   6);
+
+            line(frame,point2D[3], point2D[4], Scalar(255,0,0), 6);
+            line(frame,point2D[4], point2D[5], Scalar(255,0,0), 6);
+            line(frame,point2D[5], point2D[6], Scalar(255,0,0), 6);
+            line(frame,point2D[3], point2D[6], Scalar(255,0,0), 6);
+
+            /*
             int closest_index = 24;
             circle(frame,Point((int)corners[closest_index].x,(int)corners[closest_index].y), 20, Scalar(0, 0, 255));
             line(frame, Point((int)corners[closest_index+8].x, (int)corners[closest_index+8].y),  Point((int)corners[closest_index+6].x, (int)corners[closest_index+6].y), Scalar(255,0,0), 10);
             line(frame, Point((int)corners[closest_index+8].x, (int)corners[closest_index+8].y),  Point((int)corners[closest_index-6].x, (int)corners[closest_index-6].y), Scalar(255,0,0), 10);
             line(frame, Point((int)corners[closest_index-6].x, (int)corners[closest_index-6].y),  Point((int)corners[closest_index-8].x, (int)corners[closest_index-8].y), Scalar(255,0,0), 10);
             line(frame, Point((int)corners[closest_index+6].x, (int)corners[closest_index+6].y),  Point((int)corners[closest_index-8].x, (int)corners[closest_index-8].y), Scalar(255,0,0), 10);
-        } else {
+*/
+            //This is camera matrix and dist_coeffs , you will get in camera calibration.(copy from intrinsic.xml)
+
+
+
+        }
             //printf("not found\n");
             //find average of all points and select point as center which is closest to the average of them
-            int center;
+            /*int center;
             float x_total = 0;
             float y_total = 0;
             for(int i = 0; i < corners.size(); i++) {
@@ -150,17 +222,31 @@ int main(int argc, char** argv){
                     closest_index = i;
                 }
             }
-            circle(frame,Point((int)corners[closest_index].x,(int)corners[closest_index].y), 20, Scalar(0, 0, 255)); //red
-            circle(frame,Point((int)corners[closest_index-1].x,(int)corners[closest_index-1].y), 20, Scalar(255, 0, 0)); //green
+             //green
 
-            float x_distance = corners[closest_index].x - corners[closest_index-1].x;
-            float y_distance = corners[closest_index].y - corners[closest_index-1].y;
+            float x_distance = corners[closest_index-1].x - corners[closest_index].x;
+            float y_distance = -1* (corners[closest_index-1].y - corners[closest_index].y);
+            float distance = sqrtf(x_distance*x_distance + y_distance*y_distance);
             Point corner1 = Point((int)corners[closest_index].x,(int)corners[closest_index].y);
             Point corner2 = Point((int)corners[closest_index-1].x,(int)corners[closest_index-1].y);
-            float distance = sqrtf(x_distance*x_distance + y_distance*y_distance);
+            float angle = cvFastArctan(y_distance, x_distance); //angle from center to anchor point
+            printf("%f\n",angle);
+
+            float angle_to_3 = 270+angle;
+            if(angle_to_3 > 360) {
+                angle_to_3 -= 360;
+            }
+
+            Point corner3 = Point((int)corners[2].x,(int)corners[2].y);
+
+
+            circle(frame,corner1, 20, Scalar(0, 0, 255)); //red
+            circle(frame,corner2, 20, Scalar(255, 0, 0)); //blue
+            circle(frame,corner3, 20, Scalar(0, 255, 0)); //green
+
 
             printf("Center X,Y %f\t%f\tClosest X,Y %f\t%f\t X_d,Y_d,T_d %f\t%f\t%f\n", corners[closest_index].x, corners[closest_index].y, corners[closest_index-1].x, corners[closest_index-1].y, x_distance, y_distance, distance);
-
+            */
 
             /*vector<CornerPoint> squareCorners= corners_of_center(Point((int)corners[closest_index].x,(int)corners[closest_index].y), corners);
 
@@ -176,21 +262,20 @@ int main(int argc, char** argv){
             line(frame, Point((int)squareCorners[1].x, (int)squareCorners[1].y),  Point((int)squareCorners[3].x, (int)squareCorners[3].y), Scalar(255,0,0), 10);
             line(frame, Point((int)squareCorners[2].x, (int)squareCorners[2].y),  Point((int)squareCorners[3].x, (int)squareCorners[3].y), Scalar(255,0,0), 10);
             */
-        }
         /*
          * 0 1
          * 2 3
          */
 
 
-        drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
+        //drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 
         // Display the resulting frame
         imshow( "Frame", frame );
         //print_vec(corners);
 
         // Press  ESC on keyboard to exit
-        waitKey(100);
+        waitKey(1);
 
 
     }
