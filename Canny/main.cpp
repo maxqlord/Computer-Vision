@@ -12,7 +12,7 @@ Mat dst, detected_edges;
 
 int edgeThresh = 1;
 int lowThreshold;
-int const max_lowThreshold = 100;
+int const max_lowThreshold = 350;
 int ratio = 5;
 int kernel_size = 5;
 
@@ -24,7 +24,8 @@ int kernel_size = 5;
 void CannyThreshold(int, void*)
 {
     /// Reduce noise with a kernel 3x3
-    blur( src_gray, detected_edges, Size(5,5) );
+    blur( src_gray, detected_edges, Size(3,3) );
+    blur( detected_edges, detected_edges, Size(3,3) );
 
     /// Canny detector
     Canny( detected_edges, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size );
@@ -42,7 +43,14 @@ void CannyThreshold(int, void*)
 int main( int argc, char** argv )
 {
     /// Load an image
+    if ( argc != 2 )
+    {
+        printf("usage: ./Canny easy.jpg\n");
+        return -1;
+    }
+
     src = imread( argv[1] );
+
 
     if( !src.data )
     { return -1; }
