@@ -1,4 +1,3 @@
-//Maxwell Lord Period 3
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -55,6 +54,7 @@ using namespace std;
 
 
 void print_vec(int M[700][700]) {
+    remove("triangle.ppm");
     ofstream myfile;
     myfile.open ("triangle.ppm");
     myfile << "P3  700  700  1 \n";

@@ -61,7 +61,7 @@ int main(int argc, char** argv )
 {
     if ( argc != 2 ) //if command line arguments aren't correct
     {
-        printf("usage: DisplayImage.out <Image_Path>\n");
+        printf("usage: ./CoinsOpenCV easy.jpg\n");
         return -1;
     }
 
